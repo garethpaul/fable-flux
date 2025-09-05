@@ -1,0 +1,47 @@
+generation:
+  start_id: 1501
+  end_id: 10000
+  batch_size: 50
+  use_existing_inspiration: 0.3 # 30% chance to use existing story as inspiration
+  concurrent_requests: 5
+
+quality:
+  min_words: 600
+  max_words: 700
+  required_sentiment_score: 0.1 # Positive sentiment threshold
+  min_reading_ease: 70 # Flesch Reading Ease score for age 3+
+
+diversity:
+  character_balance_threshold: 5 # Max difference in character usage
+  setting_balance_threshold: 10 # Max difference in setting usage
+  tag_combination_cooldown: 50 # Avoid same combo for N stories
+  max_tags_per_story: 5
+  min_tags_per_story: 3
+
+poe_api:
+  models: ["Claude-Sonnet-4", "GPT-5"]
+  rate_limit: 10 # requests per minute
+  timeout: 30
+  temperature: 0.7
+  max_tokens: 1200
+  top_p: 0.9
+
+retry:
+  max_attempts: 3
+  backoff_factor: 2
+  initial_delay: 1
+
+logging:
+  level: INFO
+  file: "logs/generation.log"
+  format: "%(asctime)s - %(levelname)s - %(message)s"
+  max_bytes: 10485760 # 10MB
+  backup_count: 5
+
+paths:
+  existing_stories: "data/stories"
+  output_directory: "output/generated_stories"
+  characters_file: "data/characters.json"
+  settings_file: "data/settings.json"
+  tags_file: "data/tags.json"
+  progress_file: "logs/progress.json"
