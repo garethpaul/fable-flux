@@ -163,25 +163,38 @@ class StoryGenerator:
             logging.error(f"Failed to save progress: {e}")
             
     async def initialize_poe_client(self):
-        """Initialize the Poe API client"""
+        """Initialize the Poe API client with model validation"""
         api_key = os.getenv('POE_API_KEY')
         if not api_key:
             raise ValueError("POE_API_KEY environment variable must be set")
             
         poe_config = self.config.get('poe_api', {})
-        self.poe_client = PoeClient(api_key, poe_config)
         
-        # Test connection
-        logging.info("Testing Poe API connection...")
-        async with self.poe_client as client:
-            if await client.test_connection():
-                logging.info("Poe API connection successful")
-            else:
-                raise RuntimeError("Poe API connection test failed")
+        try:
+            self.poe_client = PoeClient(api_key, poe_config)
+            logging.info(f"Initialized PoeClient with {len(self.poe_client.available_models)} models: {self.poe_client.available_models}")
+        except ValueError as e:
+            logging.error(f"Failed to initialize PoeClient due to model configuration error: {e}")
+            raise RuntimeError(f"Model configuration error: {e}")
+        
+        # Test connection and validate models
+        logging.info("Testing Poe API connection and validating models...")
+        try:
+            async with self.poe_client as client:
+                if await client.test_connection():
+                    logging.info("Poe API connection and model validation successful")
+                else:
+                    raise RuntimeError("Poe API connection or model validation failed")
+        except RuntimeError as e:
+            logging.error(f"Model validation failed: {e}")
+            raise
+        except Exception as e:
+            logging.error(f"Unexpected error during client initialization: {e}")
+            raise RuntimeError(f"Client initialization failed: {e}")
                 
     async def generate_story_batch(self, start_id: int, end_id: int) -> Dict:
         """
-        Generate a batch of stories
+        Generate a batch of stories with high concurrency
         
         Args:
             start_id: Starting story ID
@@ -193,44 +206,62 @@ class StoryGenerator:
         if not self.poe_client:
             await self.initialize_poe_client()
             
+        story_ids = list(range(start_id, end_id + 1))
         batch_results = {
-            'total_requested': end_id - start_id + 1,
+            'total_requested': len(story_ids),
             'successful': 0,
             'failed': 0,
             'failed_ids': []
         }
         
-        logging.info(f"Starting batch generation: stories {start_id} to {end_id}")
+        logging.info(f"Starting concurrent batch generation: stories {start_id} to {end_id} ({len(story_ids)} stories)")
         
         async with self.poe_client:
-            for story_id in range(start_id, end_id + 1):
-                try:
-                    success = await self.generate_single_story(story_id)
-                    if success:
-                        batch_results['successful'] += 1
-                        self.progress['completed_stories'] += 1
-                        self.progress['last_story_id'] = story_id
-                        logging.info(f"✓ Generated story {story_id} ({batch_results['successful']}/{batch_results['total_requested']})")
-                    else:
-                        batch_results['failed'] += 1
-                        batch_results['failed_ids'].append(story_id)
-                        self.progress['failed_stories'].append(story_id)
-                        logging.error(f"✗ Failed to generate story {story_id}")
-                        
-                    # Save progress periodically
-                    if story_id % 10 == 0:
-                        self._save_progress()
-                        
-                except Exception as e:
-                    logging.error(f"Error generating story {story_id}: {e}")
+            # Create concurrent tasks for all stories
+            semaphore = asyncio.Semaphore(self.config['generation']['concurrent_requests'])
+            tasks = [
+                self._generate_story_with_semaphore(story_id, semaphore)
+                for story_id in story_ids
+            ]
+            
+            # Process all stories concurrently
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results
+            for story_id, result in zip(story_ids, results):
+                if isinstance(result, Exception):
+                    logging.error(f"✗ Exception generating story {story_id}: {result}")
                     batch_results['failed'] += 1
                     batch_results['failed_ids'].append(story_id)
+                    self.progress['failed_stories'].append(story_id)
+                elif result:
+                    batch_results['successful'] += 1
+                    self.progress['completed_stories'] += 1
+                    self.progress['last_story_id'] = max(self.progress.get('last_story_id', 0), story_id)
+                    if batch_results['successful'] % 10 == 0:
+                        logging.info(f"✓ Completed {batch_results['successful']}/{batch_results['total_requested']} stories")
+                else:
+                    batch_results['failed'] += 1
+                    batch_results['failed_ids'].append(story_id)
+                    self.progress['failed_stories'].append(story_id)
                     
         # Save final progress
         self._save_progress()
         
-        logging.info(f"Batch completed: {batch_results['successful']} successful, {batch_results['failed']} failed")
+        success_rate = (batch_results['successful'] / batch_results['total_requested']) * 100
+        logging.info(f"Concurrent batch completed: {batch_results['successful']} successful, {batch_results['failed']} failed ({success_rate:.1f}% success rate)")
         return batch_results
+        
+    async def _generate_story_with_semaphore(self, story_id: int, semaphore: asyncio.Semaphore) -> bool:
+        """
+        Generate a single story with semaphore control for concurrency limiting
+        """
+        async with semaphore:
+            try:
+                return await self.generate_single_story(story_id)
+            except Exception as e:
+                logging.error(f"Error in semaphore-controlled generation for story {story_id}: {e}")
+                return False
         
     async def generate_single_story(self, story_id: int) -> bool:
         """
@@ -345,12 +376,34 @@ class StoryGenerator:
             
     def get_generation_stats(self) -> Dict:
         """
-        Get comprehensive generation statistics
+        Get comprehensive generation statistics including model information
         """
         diversity_stats = self.diversity_tracker.get_usage_stats()
         
         total_target = self.config['generation']['end_id'] - self.config['generation']['start_id'] + 1
         completed = self.progress['completed_stories']
+        
+        # Model information
+        model_info = {
+            'configured_models': [],
+            'model_count': 0
+        }
+        
+        if self.poe_client:
+            model_info = {
+                'configured_models': self.poe_client.available_models,
+                'model_count': len(self.poe_client.available_models)
+            }
+        else:
+            # Fallback to config if client not initialized
+            poe_config = self.config.get('poe_api', {})
+            models = poe_config.get('models', poe_config.get('model', ['Unknown']))
+            if isinstance(models, str):
+                models = [models]
+            model_info = {
+                'configured_models': models,
+                'model_count': len(models) if isinstance(models, list) else 1
+            }
         
         stats = {
             'progress': {
@@ -368,7 +421,8 @@ class StoryGenerator:
                 'characters_count': len(self.characters),
                 'settings_count': len(self.settings),
                 'tags_count': len(self.tags)
-            }
+            },
+            'models': model_info
         }
         
         return stats

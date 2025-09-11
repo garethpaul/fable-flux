@@ -1,13 +1,13 @@
 generation:
   start_id: 1501
   end_id: 10000
-  batch_size: 50
+  batch_size: 100 # Optimal batch size for concurrent processing
   use_existing_inspiration: 0.3 # 30% chance to use existing story as inspiration
-  concurrent_requests: 5
+  concurrent_requests: 25 # High concurrency for speed
 
 quality:
-  min_words: 600
-  max_words: 700
+  min_words: 500
+  max_words: 1500
   required_sentiment_score: 0.1 # Positive sentiment threshold
   min_reading_ease: 70 # Flesch Reading Ease score for age 3+
 
@@ -19,12 +19,13 @@ diversity:
   min_tags_per_story: 3
 
 poe_api:
-  models: ["Claude-Sonnet-4", "GPT-5"]
-  rate_limit: 10 # requests per minute
-  timeout: 30
+  models: ["GPT-5", "Claude-Sonnet-4"] # Use working model names
+  rate_limit: 450 # High rate limit for speed (7.5 requests per second)
+  timeout: 45 # Longer timeout for concurrent requests
   temperature: 0.7
-  max_tokens: 1200
+  max_tokens: 5200 # Reasonable limit for story generation
   top_p: 0.9
+  concurrent_requests: 25 # Allow high concurrency
 
 retry:
   max_attempts: 3

@@ -14,7 +14,7 @@ from pathlib import Path
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
-from batch_processor import BatchProcessor, run_full_generation, run_test, retry_failed
+from src.batch_processor import BatchProcessor, run_full_generation, run_test, retry_failed
 
 def setup_environment():
     """

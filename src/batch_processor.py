@@ -70,32 +70,42 @@ class BatchProcessor:
             'end_time': None
         }
         
-        # Process in batches
+        # Process in batches with high concurrency
         current_id = resume_id
         while current_id <= end_id and not self.should_stop:
             batch_end = min(current_id + batch_size - 1, end_id)
+            batch_size_actual = batch_end - current_id + 1
             
-            logging.info(f"Processing batch: stories {current_id} to {batch_end}")
+            batch_start_time = datetime.now()
+            logging.info(f"Processing concurrent batch: stories {current_id} to {batch_end} ({batch_size_actual} stories)")
             
             try:
                 batch_results = await self.generator.generate_story_batch(current_id, batch_end)
+                batch_duration = (datetime.now() - batch_start_time).total_seconds()
                 
                 # Update totals
                 total_results['total_completed'] += batch_results['successful']
                 total_results['total_failed'] += batch_results['failed']
                 total_results['batches_completed'] += 1
                 
-                # Store batch stats
+                # Calculate performance metrics
+                stories_per_second = batch_size_actual / max(batch_duration, 0.1)
+                success_rate = (batch_results['successful'] / batch_size_actual) * 100
+                
+                # Store enhanced batch stats
                 self.batch_stats.append({
                     'batch_start': current_id,
                     'batch_end': batch_end,
                     'successful': batch_results['successful'],
                     'failed': batch_results['failed'],
-                    'timestamp': datetime.now().isoformat()
+                    'duration_seconds': batch_duration,
+                    'stories_per_second': stories_per_second,
+                    'success_rate': success_rate,
+                    'timestamp': batch_start_time.isoformat()
                 })
                 
-                # Log progress
-                self._log_progress(current_id, batch_end, end_id, batch_results)
+                # Log enhanced progress
+                self._log_enhanced_progress(current_id, batch_end, end_id, batch_results, batch_duration, stories_per_second)
                 
                 if batch_results['failed'] > 0:
                     total_results['failed_batches'].append({
@@ -114,9 +124,7 @@ class BatchProcessor:
                 
             current_id = batch_end + 1
             
-            # Brief pause between batches to avoid overwhelming the API
-            if current_id <= end_id and not self.should_stop:
-                await asyncio.sleep(2)
+            # No pause needed with proper rate limiting - let concurrent processing handle the flow
                 
         self.is_running = False
         total_results['end_time'] = datetime.now().isoformat()
@@ -132,7 +140,12 @@ class BatchProcessor:
         return total_results
         
     def _log_progress(self, batch_start: int, batch_end: int, total_end: int, batch_results: Dict):
-        """Log detailed progress information"""
+        """Log detailed progress information (legacy method)"""
+        self._log_enhanced_progress(batch_start, batch_end, total_end, batch_results, None, None)
+        
+    def _log_enhanced_progress(self, batch_start: int, batch_end: int, total_end: int, batch_results: Dict,
+                             batch_duration: float = None, stories_per_second: float = None):
+        """Log enhanced progress information with performance metrics"""
         total_stories = total_end - self.config['generation']['start_id'] + 1
         completed_so_far = batch_end - self.config['generation']['start_id'] + 1
         progress_pct = (completed_so_far / total_stories) * 100
@@ -149,9 +162,14 @@ class BatchProcessor:
             
         success_rate = (batch_results['successful'] / (batch_results['successful'] + batch_results['failed'])) * 100 if (batch_results['successful'] + batch_results['failed']) > 0 else 0
         
+        # Build performance info
+        perf_info = ""
+        if batch_duration is not None and stories_per_second is not None:
+            perf_info = f" | Speed: {stories_per_second:.1f} stories/sec | Duration: {batch_duration:.1f}s"
+        
         logging.info(f"Progress: {completed_so_far}/{total_stories} ({progress_pct:.1f}%) | "
-                    f"Batch: {batch_results['successful']}/{batch_results['successful'] + batch_results['failed']} ({success_rate:.1f}%) | "
-                    f"ETA: {eta_str}")
+                    f"Batch: {batch_results['successful']}/{batch_results['successful'] + batch_results['failed']} ({success_rate:.1f}%)"
+                    f"{perf_info} | ETA: {eta_str}")
                     
     def _log_final_summary(self, results: Dict):
         """Log comprehensive final summary"""

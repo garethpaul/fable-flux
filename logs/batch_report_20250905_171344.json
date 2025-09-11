@@ -1,0 +1,964 @@
+{
+  "total_requested": 8500,
+  "total_completed": 8487,
+  "total_failed": 12,
+  "batches_completed": 85,
+  "failed_batches": [
+    {
+      "start_id": 1502,
+      "end_id": 1601,
+      "failed_ids": [
+        1582
+      ]
+    },
+    {
+      "start_id": 2102,
+      "end_id": 2201,
+      "failed_ids": [
+        2135
+      ]
+    },
+    {
+      "start_id": 3302,
+      "end_id": 3401,
+      "failed_ids": [
+        3315
+      ]
+    },
+    {
+      "start_id": 4202,
+      "end_id": 4301,
+      "failed_ids": [
+        4290
+      ]
+    },
+    {
+      "start_id": 5102,
+      "end_id": 5201,
+      "failed_ids": [
+        5193
+      ]
+    },
+    {
+      "start_id": 5302,
+      "end_id": 5401,
+      "failed_ids": [
+        5381
+      ]
+    },
+    {
+      "start_id": 5802,
+      "end_id": 5901,
+      "failed_ids": [
+        5836
+      ]
+    },
+    {
+      "start_id": 6602,
+      "end_id": 6701,
+      "failed_ids": [
+        6637
+      ]
+    },
+    {
+      "start_id": 6702,
+      "end_id": 6801,
+      "failed_ids": [
+        6737
+      ]
+    },
+    {
+      "start_id": 7402,
+      "end_id": 7501,
+      "failed_ids": [
+        7443
+      ]
+    },
+    {
+      "start_id": 8802,
+      "end_id": 8901,
+      "failed_ids": [
+        8890
+      ]
+    },
+    {
+      "start_id": 9102,
+      "end_id": 9201,
+      "failed_ids": [
+        9139
+      ]
+    }
+  ],
+  "start_time": "2025-09-05T14:43:22.174543",
+  "end_time": "2025-09-05T17:13:44.271346",
+  "batch_statistics": [
+    {
+      "batch_start": 1502,
+      "batch_end": 1601,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 141.891129,
+      "stories_per_second": 0.7047656939849989,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T14:43:22.174551"
+    },
+    {
+      "batch_start": 1602,
+      "batch_end": 1701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 97.473018,
+      "stories_per_second": 1.0259249385301685,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:45:44.065744"
+    },
+    {
+      "batch_start": 1702,
+      "batch_end": 1801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 98.607084,
+      "stories_per_second": 1.0141259222309018,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:47:21.538834"
+    },
+    {
+      "batch_start": 1802,
+      "batch_end": 1901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.953688,
+      "stories_per_second": 1.0004633345795104,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:49:00.145992"
+    },
+    {
+      "batch_start": 1902,
+      "batch_end": 2001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 102.408756,
+      "stories_per_second": 0.9764790034164658,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:50:40.099715"
+    },
+    {
+      "batch_start": 2002,
+      "batch_end": 2101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 117.047894,
+      "stories_per_second": 0.8543511257024411,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:52:22.508534"
+    },
+    {
+      "batch_start": 2102,
+      "batch_end": 2201,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 117.243304,
+      "stories_per_second": 0.8529271744167155,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T14:54:19.556468"
+    },
+    {
+      "batch_start": 2202,
+      "batch_end": 2301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 112.441683,
+      "stories_per_second": 0.8893499041632097,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:56:16.799810"
+    },
+    {
+      "batch_start": 2302,
+      "batch_end": 2401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 105.292995,
+      "stories_per_second": 0.9497307964314244,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:58:09.241541"
+    },
+    {
+      "batch_start": 2402,
+      "batch_end": 2501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.405922,
+      "stories_per_second": 1.0059762837871973,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T14:59:54.534616"
+    },
+    {
+      "batch_start": 2502,
+      "batch_end": 2601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 94.108082,
+      "stories_per_second": 1.0626079915219184,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:01:33.940576"
+    },
+    {
+      "batch_start": 2602,
+      "batch_end": 2701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 103.936555,
+      "stories_per_second": 0.9621254042911082,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:03:08.048699"
+    },
+    {
+      "batch_start": 2702,
+      "batch_end": 2801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 97.261937,
+      "stories_per_second": 1.0281514339982762,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:04:51.985299"
+    },
+    {
+      "batch_start": 2802,
+      "batch_end": 2901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 97.502554,
+      "stories_per_second": 1.0256141598095985,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:06:29.247302"
+    },
+    {
+      "batch_start": 2902,
+      "batch_end": 3001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 101.318566,
+      "stories_per_second": 0.9869859389837791,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:08:06.749923"
+    },
+    {
+      "batch_start": 3002,
+      "batch_end": 3101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 101.286383,
+      "stories_per_second": 0.9872995464750676,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:09:48.068548"
+    },
+    {
+      "batch_start": 3102,
+      "batch_end": 3201,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 98.17757,
+      "stories_per_second": 1.0185625902128155,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:11:29.354969"
+    },
+    {
+      "batch_start": 3202,
+      "batch_end": 3301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 104.554572,
+      "stories_per_second": 0.956438327728031,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:13:07.532577"
+    },
+    {
+      "batch_start": 3302,
+      "batch_end": 3401,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 102.744543,
+      "stories_per_second": 0.9732877005448358,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T15:14:52.087197"
+    },
+    {
+      "batch_start": 3402,
+      "batch_end": 3501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 96.334439,
+      "stories_per_second": 1.0380503695049286,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:16:34.831803"
+    },
+    {
+      "batch_start": 3502,
+      "batch_end": 3601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 119.068584,
+      "stories_per_second": 0.8398520973424862,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:18:11.166318"
+    },
+    {
+      "batch_start": 3602,
+      "batch_end": 3701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.175833,
+      "stories_per_second": 1.008310159593013,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:20:10.234977"
+    },
+    {
+      "batch_start": 3702,
+      "batch_end": 3801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.453613,
+      "stories_per_second": 1.0054938878892212,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:21:49.410868"
+    },
+    {
+      "batch_start": 3802,
+      "batch_end": 3901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 117.129904,
+      "stories_per_second": 0.8537529408373801,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:23:28.864609"
+    },
+    {
+      "batch_start": 3902,
+      "batch_end": 4001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 96.312084,
+      "stories_per_second": 1.03829131139972,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:25:25.994578"
+    },
+    {
+      "batch_start": 4002,
+      "batch_end": 4101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 113.929659,
+      "stories_per_second": 0.8777345677827404,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:27:02.306696"
+    },
+    {
+      "batch_start": 4102,
+      "batch_end": 4201,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 98.964193,
+      "stories_per_second": 1.010466482559,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:28:56.236392"
+    },
+    {
+      "batch_start": 4202,
+      "batch_end": 4301,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 135.02975,
+      "stories_per_second": 0.7405775393940964,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T15:30:35.200659"
+    },
+    {
+      "batch_start": 4302,
+      "batch_end": 4401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 110.447009,
+      "stories_per_second": 0.905411571625267,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:32:50.230485"
+    },
+    {
+      "batch_start": 4402,
+      "batch_end": 4501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.926831,
+      "stories_per_second": 1.000732225762268,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:34:40.677583"
+    },
+    {
+      "batch_start": 4502,
+      "batch_end": 4601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 88.304707,
+      "stories_per_second": 1.1324424642505184,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:36:20.604497"
+    },
+    {
+      "batch_start": 4602,
+      "batch_end": 4701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 94.383919,
+      "stories_per_second": 1.0595025197035948,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:37:48.909301"
+    },
+    {
+      "batch_start": 4702,
+      "batch_end": 4801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 92.848285,
+      "stories_per_second": 1.0770258169011953,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:39:23.293256"
+    },
+    {
+      "batch_start": 4802,
+      "batch_end": 4901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 102.940937,
+      "stories_per_second": 0.9714308312542366,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:40:56.141577"
+    },
+    {
+      "batch_start": 4902,
+      "batch_end": 5001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 115.754846,
+      "stories_per_second": 0.863894717634543,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:42:39.082554"
+    },
+    {
+      "batch_start": 5002,
+      "batch_end": 5101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 92.561355,
+      "stories_per_second": 1.0803644782425668,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:44:34.837479"
+    },
+    {
+      "batch_start": 5102,
+      "batch_end": 5201,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 142.079885,
+      "stories_per_second": 0.7038293985105634,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T15:46:07.398957"
+    },
+    {
+      "batch_start": 5202,
+      "batch_end": 5301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 95.257825,
+      "stories_per_second": 1.0497825244277832,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:48:29.478883"
+    },
+    {
+      "batch_start": 5302,
+      "batch_end": 5401,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 132.112319,
+      "stories_per_second": 0.7569316832596057,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T15:50:04.736747"
+    },
+    {
+      "batch_start": 5402,
+      "batch_end": 5501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 88.941659,
+      "stories_per_second": 1.1243325245372362,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:52:16.849137"
+    },
+    {
+      "batch_start": 5502,
+      "batch_end": 5601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 115.715615,
+      "stories_per_second": 0.8641876033757415,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:53:45.790874"
+    },
+    {
+      "batch_start": 5602,
+      "batch_end": 5701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 91.454693,
+      "stories_per_second": 1.093437599752262,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:55:41.506548"
+    },
+    {
+      "batch_start": 5702,
+      "batch_end": 5801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 97.576406,
+      "stories_per_second": 1.0248379100988818,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T15:57:12.961299"
+    },
+    {
+      "batch_start": 5802,
+      "batch_end": 5901,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 97.058578,
+      "stories_per_second": 1.0303056366640773,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T15:58:50.537791"
+    },
+    {
+      "batch_start": 5902,
+      "batch_end": 6001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 104.170536,
+      "stories_per_second": 0.9599643415485546,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:00:27.596409"
+    },
+    {
+      "batch_start": 6002,
+      "batch_end": 6101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 92.512359,
+      "stories_per_second": 1.0809366562580032,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:02:11.767010"
+    },
+    {
+      "batch_start": 6102,
+      "batch_end": 6201,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 92.664264,
+      "stories_per_second": 1.0791646712911893,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:03:44.279429"
+    },
+    {
+      "batch_start": 6202,
+      "batch_end": 6301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 103.79196,
+      "stories_per_second": 0.9634657636294757,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:05:16.943793"
+    },
+    {
+      "batch_start": 6302,
+      "batch_end": 6401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 91.386976,
+      "stories_per_second": 1.094247828049371,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:07:00.735835"
+    },
+    {
+      "batch_start": 6402,
+      "batch_end": 6501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 110.374886,
+      "stories_per_second": 0.9060032007643477,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:08:32.123147"
+    },
+    {
+      "batch_start": 6502,
+      "batch_end": 6601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 88.469153,
+      "stories_per_second": 1.130337486106598,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:10:22.498072"
+    },
+    {
+      "batch_start": 6602,
+      "batch_end": 6701,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 97.547028,
+      "stories_per_second": 1.0251465580273753,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T16:11:50.967292"
+    },
+    {
+      "batch_start": 6702,
+      "batch_end": 6801,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 117.817521,
+      "stories_per_second": 0.8487701926778786,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T16:13:28.514393"
+    },
+    {
+      "batch_start": 6802,
+      "batch_end": 6901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 92.847098,
+      "stories_per_second": 1.0770395860945488,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:15:26.332009"
+    },
+    {
+      "batch_start": 6902,
+      "batch_end": 7001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 102.716177,
+      "stories_per_second": 0.9735564827339709,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:16:59.179190"
+    },
+    {
+      "batch_start": 7002,
+      "batch_end": 7101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 102.548125,
+      "stories_per_second": 0.9751519103835394,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:18:41.895426"
+    },
+    {
+      "batch_start": 7102,
+      "batch_end": 7201,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 115.179101,
+      "stories_per_second": 0.8682130623679725,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:20:24.443675"
+    },
+    {
+      "batch_start": 7202,
+      "batch_end": 7301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 108.973951,
+      "stories_per_second": 0.9176504942910623,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:22:19.622861"
+    },
+    {
+      "batch_start": 7302,
+      "batch_end": 7401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 98.074268,
+      "stories_per_second": 1.0196354460682795,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:24:08.596858"
+    },
+    {
+      "batch_start": 7402,
+      "batch_end": 7501,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 133.348124,
+      "stories_per_second": 0.7499168117280749,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T16:25:46.671166"
+    },
+    {
+      "batch_start": 7502,
+      "batch_end": 7601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.124265,
+      "stories_per_second": 1.0088347187240179,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:28:00.019341"
+    },
+    {
+      "batch_start": 7602,
+      "batch_end": 7701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 101.870086,
+      "stories_per_second": 0.9816424421198584,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:29:39.143663"
+    },
+    {
+      "batch_start": 7702,
+      "batch_end": 7801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 108.158874,
+      "stories_per_second": 0.9245658382131456,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:31:21.013788"
+    },
+    {
+      "batch_start": 7802,
+      "batch_end": 7901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 117.0021,
+      "stories_per_second": 0.8546855141916256,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:33:09.172734"
+    },
+    {
+      "batch_start": 7902,
+      "batch_end": 8001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 98.428783,
+      "stories_per_second": 1.015962983104241,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:35:06.174875"
+    },
+    {
+      "batch_start": 8002,
+      "batch_end": 8101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 116.885555,
+      "stories_per_second": 0.8555377095142338,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:36:44.603701"
+    },
+    {
+      "batch_start": 8102,
+      "batch_end": 8201,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 97.743068,
+      "stories_per_second": 1.0230904558878795,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:38:41.489294"
+    },
+    {
+      "batch_start": 8202,
+      "batch_end": 8301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 103.816547,
+      "stories_per_second": 0.9632375848524417,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:40:19.232415"
+    },
+    {
+      "batch_start": 8302,
+      "batch_end": 8401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 104.57122,
+      "stories_per_second": 0.9562860603519783,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:42:03.049025"
+    },
+    {
+      "batch_start": 8402,
+      "batch_end": 8501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 101.175532,
+      "stories_per_second": 0.9883812619833815,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:43:47.620295"
+    },
+    {
+      "batch_start": 8502,
+      "batch_end": 8601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 117.451194,
+      "stories_per_second": 0.8514174832484036,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:45:28.795895"
+    },
+    {
+      "batch_start": 8602,
+      "batch_end": 8701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 129.335157,
+      "stories_per_second": 0.7731849739819776,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:47:26.247179"
+    },
+    {
+      "batch_start": 8702,
+      "batch_end": 8801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 140.38788,
+      "stories_per_second": 0.7123122024493852,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:49:35.582419"
+    },
+    {
+      "batch_start": 8802,
+      "batch_end": 8901,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 133.157412,
+      "stories_per_second": 0.7509908648570011,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T16:51:55.970374"
+    },
+    {
+      "batch_start": 8902,
+      "batch_end": 9001,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 130.630029,
+      "stories_per_second": 0.7655207670511961,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:54:09.127828"
+    },
+    {
+      "batch_start": 9002,
+      "batch_end": 9101,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 95.134507,
+      "stories_per_second": 1.0511433038697515,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:56:19.758087"
+    },
+    {
+      "batch_start": 9102,
+      "batch_end": 9201,
+      "successful": 99,
+      "failed": 1,
+      "duration_seconds": 109.795244,
+      "stories_per_second": 0.9107862632009817,
+      "success_rate": 99.0,
+      "timestamp": "2025-09-05T16:57:54.892635"
+    },
+    {
+      "batch_start": 9202,
+      "batch_end": 9301,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 108.594213,
+      "stories_per_second": 0.9208593831791019,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T16:59:44.687937"
+    },
+    {
+      "batch_start": 9302,
+      "batch_end": 9401,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 96.809923,
+      "stories_per_second": 1.0329519629924713,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:01:33.282200"
+    },
+    {
+      "batch_start": 9402,
+      "batch_end": 9501,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 101.166483,
+      "stories_per_second": 0.988469669346912,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:03:10.092154"
+    },
+    {
+      "batch_start": 9502,
+      "batch_end": 9601,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 120.738386,
+      "stories_per_second": 0.8282370115499141,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:04:51.258677"
+    },
+    {
+      "batch_start": 9602,
+      "batch_end": 9701,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 105.199733,
+      "stories_per_second": 0.950572754780661,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:06:51.997107"
+    },
+    {
+      "batch_start": 9702,
+      "batch_end": 9801,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 99.307609,
+      "stories_per_second": 1.0069721847799196,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:08:37.196919"
+    },
+    {
+      "batch_start": 9802,
+      "batch_end": 9901,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 102.371721,
+      "stories_per_second": 0.9768322640585481,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:10:16.504613"
+    },
+    {
+      "batch_start": 9902,
+      "batch_end": 10000,
+      "successful": 99,
+      "failed": 0,
+      "duration_seconds": 105.394923,
+      "stories_per_second": 0.9393241835757117,
+      "success_rate": 100.0,
+      "timestamp": "2025-09-05T17:11:58.876376"
+    }
+  ],
+  "diversity_stats": {
+    "character_usage": {
+      "min": 334,
+      "max": 355,
+      "avg": 339.48
+    },
+    "setting_usage": {
+      "min": 332,
+      "max": 354,
+      "avg": 339.48
+    },
+    "story_types": {
+      "problem_solution": 4244,
+      "daily_adventure": 4243
+    },
+    "total_stories": 8487,
+    "unique_tag_combinations": 8077
+  }
+}

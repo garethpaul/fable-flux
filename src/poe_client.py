@@ -8,37 +8,45 @@ import asyncio
 import json
 import logging
 import time
-from typing import Optional, Dict, Any
+import random
+from typing import Optional, Dict, Any, List
 from asyncio import Semaphore
 import os
 
 class RateLimiter:
-    """Simple rate limiter using token bucket algorithm"""
+    """High-performance rate limiter using token bucket algorithm for concurrent requests"""
     
     def __init__(self, rate: int, per: float = 60.0):
         self.rate = rate  # requests per time period
         self.per = per    # time period in seconds
         self.allowance = rate
         self.last_check = time.time()
+        self._lock = asyncio.Lock()  # Protect against race conditions in concurrent access
+        
+        # Pre-calculate for efficiency
+        self.tokens_per_second = self.rate / self.per
+        self.seconds_per_token = self.per / self.rate
         
     async def acquire(self):
-        """Wait until we can make a request"""
-        current = time.time()
-        time_passed = current - self.last_check
-        self.last_check = current
-        
-        # Add tokens based on time passed
-        self.allowance += time_passed * (self.rate / self.per)
-        if self.allowance > self.rate:
-            self.allowance = self.rate
+        """Wait until we can make a request (thread-safe for concurrent use)"""
+        async with self._lock:
+            current = time.time()
+            time_passed = current - self.last_check
+            self.last_check = current
             
-        if self.allowance < 1.0:
-            # Need to wait
-            sleep_time = (1.0 - self.allowance) * (self.per / self.rate)
-            await asyncio.sleep(sleep_time)
-            self.allowance = 0.0
-        else:
-            self.allowance -= 1.0
+            # Add tokens based on time passed
+            self.allowance += time_passed * self.tokens_per_second
+            if self.allowance > self.rate:
+                self.allowance = self.rate
+                
+            if self.allowance >= 1.0:
+                self.allowance -= 1.0
+                return  # Request can proceed immediately
+                
+        # Need to wait - calculate outside the lock to minimize lock time
+        sleep_time = (1.0 - self.allowance) * self.seconds_per_token
+        if sleep_time > 0:
+            await asyncio.sleep(min(sleep_time, 5.0))  # Cap sleep time for responsiveness
 
 class PoeClient:
     """
@@ -53,11 +61,9 @@ class PoeClient:
         self.config = config or {}
         self.base_url = "https://api.poe.com/v1/chat/completions"
         
-        # Configuration
-        self.model = self.config.get('model', 'GPT-5')
+        # Model configuration with validation
+        self.available_models = self._validate_and_get_models()
         self.temperature = self.config.get('temperature', 0.7)
-        self.max_tokens = self.config.get('max_tokens', 1200)
-        self.top_p = self.config.get('top_p', 0.9)
         self.timeout = self.config.get('timeout', 30)
         
         # Rate limiting
@@ -68,6 +74,150 @@ class PoeClient:
         # Session will be created when needed
         self.session = None
         
+    def _validate_and_get_models(self) -> List[str]:
+        """
+        Validate and extract models from configuration
+        
+        Returns:
+            List of validated model names
+            
+        Raises:
+            ValueError: If no models are configured or models list is empty
+        """
+        # Check for both 'models' (array) and 'model' (single) for backward compatibility
+        models = self.config.get('models')
+        single_model = self.config.get('model')
+        
+        if models is not None:
+            if not isinstance(models, list):
+                raise ValueError("'models' configuration must be a list/array")
+            if len(models) == 0:
+                raise ValueError("Models array cannot be empty. At least one model must be specified.")
+            
+            # Validate each model name
+            valid_models = []
+            for model in models:
+                if not isinstance(model, str) or not model.strip():
+                    logging.warning(f"Skipping invalid model: {model}")
+                    continue
+                valid_models.append(model.strip())
+            
+            if len(valid_models) == 0:
+                raise ValueError("No valid models found in configuration. All model names were invalid.")
+                
+            logging.info(f"Configured with {len(valid_models)} models: {valid_models}")
+            return valid_models
+            
+        elif single_model:
+            # Backward compatibility for single model configuration
+            if not isinstance(single_model, str) or not single_model.strip():
+                raise ValueError("Single model configuration must be a non-empty string")
+            logging.info(f"Using single model configuration: {single_model}")
+            return [single_model.strip()]
+            
+        else:
+            # Default fallback
+            default_model = 'GPT-5'
+            logging.warning(f"No models configured, using default: {default_model}")
+            return [default_model]
+    
+    def select_random_model(self) -> str:
+        """
+        Randomly select a model from the available models
+        
+        Returns:
+            Randomly selected model name
+        """
+        if not self.available_models:
+            raise RuntimeError("No available models to select from")
+            
+        selected_model = random.choice(self.available_models)
+        logging.debug(f"Selected model: {selected_model} from {self.available_models}")
+        return selected_model
+    
+    async def validate_model_accessibility(self, model: str) -> bool:
+        """
+        Validate that a specific model is accessible via the API
+        
+        Args:
+            model: Model name to validate
+            
+        Returns:
+            True if model is accessible, False otherwise
+        """
+        test_payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": "test"}],
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            # Always use the session if available, create temporary one if not
+            if self.session:
+                async with self.session.post(self.base_url, json=test_payload, headers=headers) as response:
+                    return await self._process_validation_response(response, model)
+            else:
+                # Create a properly managed temporary session
+                timeout = aiohttp.ClientTimeout(total=5)
+                async with aiohttp.ClientSession(timeout=timeout) as temp_session:
+                    async with temp_session.post(self.base_url, json=test_payload, headers=headers) as response:
+                        return await self._process_validation_response(response, model)
+                        
+        except Exception as e:
+            logging.warning(f"Failed to validate model {model}: {e}")
+            return False
+    
+    async def _process_validation_response(self, response, model: str) -> bool:
+        """Process validation response consistently"""
+        try:
+            if response.status == 200:
+                logging.debug(f"Model {model} is accessible")
+                return True
+            elif response.status == 400:
+                try:
+                    error_data = await response.json()
+                    error_msg = str(error_data).lower()
+                    if 'model' in error_msg or 'invalid' in error_msg:
+                        logging.warning(f"Model {model} is not accessible: {error_data}")
+                        return False
+                except:
+                    pass
+                logging.warning(f"Model {model} returned 400 error")
+                return False
+            elif response.status == 404:
+                logging.warning(f"Model {model} not found (404)")
+                return False
+            else:
+                # For other status codes, assume temporary issues
+                logging.warning(f"Model {model} validation returned status {response.status}")
+                return response.status < 500  # Assume 4xx are permanent, 5xx are temporary
+        except Exception as e:
+            logging.error(f"Error processing validation response for {model}: {e}")
+            return False
+    
+    async def validate_all_models(self) -> Dict[str, bool]:
+        """
+        Validate accessibility of all configured models
+        
+        Returns:
+            Dictionary mapping model names to their accessibility status
+        """
+        results = {}
+        for model in self.available_models:
+            results[model] = await self.validate_model_accessibility(model)
+            
+        accessible_count = sum(results.values())
+        logging.info(f"Model validation results: {accessible_count}/{len(results)} models accessible")
+        
+        if accessible_count == 0:
+            raise RuntimeError("No configured models are accessible via the API")
+            
+        return results
+    
     async def __aenter__(self):
         """Async context manager entry"""
         self.session = aiohttp.ClientSession(
@@ -76,9 +226,15 @@ class PoeClient:
         return self
         
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
+        """Async context manager exit with proper cleanup"""
         if self.session:
-            await self.session.close()
+            try:
+                await self.session.close()
+                logging.debug("HTTP session closed successfully")
+            except Exception as e:
+                logging.warning(f"Error closing HTTP session: {e}")
+            finally:
+                self.session = None
             
     async def generate_story(self, prompt: str, max_retries: int = 3) -> Optional[str]:
         """
@@ -134,14 +290,17 @@ class PoeClient:
         
     async def _make_request(self, prompt: str) -> Optional[str]:
         """
-        Make the actual API request
+        Make the actual API request with randomly selected model
         """
+        # Select a random model for this request
+        selected_model = self.select_random_model()
+        
         payload = {
-            "model": self.model,
+            "model": selected_model,
             "messages": [
                 {
                     "role": "system",
-                    "content": """You are a skilled children's story writer who creates educational, positive stories for children aged 3 and up. 
+                    "content": """You are a skilled children's story writer who creates educational, positive stories for children aged 3 and up.
 
 Your stories should:
 - Be engaging and fun for young children
@@ -159,8 +318,6 @@ Always follow the exact YAML frontmatter format and story structure provided in 
                 }
             ],
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "top_p": self.top_p
         }
         
         headers = {
@@ -168,18 +325,51 @@ Always follow the exact YAML frontmatter format and story structure provided in 
             "Content-Type": "application/json"
         }
         
-        async with self.session.post(self.base_url, json=payload, headers=headers) as response:
-            response.raise_for_status()
-            
-            result = await response.json()
-            
-            if 'choices' in result and len(result['choices']) > 0:
-                content = result['choices'][0]['message']['content']
-                logging.debug(f"Generated content length: {len(content)} characters")
-                return content
-            else:
-                logging.error(f"Unexpected API response format: {result}")
-                return None
+        logging.debug(f"Making request with model: {selected_model}")
+        
+        try:
+            async with self.session.post(self.base_url, json=payload, headers=headers) as response:
+                response_text = await response.text()
+                
+                if response.status == 200:
+                    try:
+                        result = json.loads(response_text)
+                        
+                        if 'choices' in result and len(result['choices']) > 0:
+                            content = result['choices'][0]['message']['content']
+                            logging.debug(f"Generated content length: {len(content)} characters with model {selected_model}")
+                            return content
+                        else:
+                            logging.error(f"Unexpected API response format from {selected_model}: {result}")
+                            return None
+                            
+                    except json.JSONDecodeError as e:
+                        logging.error(f"Failed to parse JSON response from {selected_model}: {e}")
+                        logging.error(f"Raw response: {response_text}")
+                        return None
+                        
+                elif response.status == 400:
+                    try:
+                        error_data = json.loads(response_text)
+                        logging.error(f"HTTP 400 Bad Request with model {selected_model}: {error_data}")
+                    except:
+                        logging.error(f"HTTP 400 Bad Request with model {selected_model}: {response_text}")
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"Bad Request with model {selected_model}"
+                    )
+                    
+                else:
+                    logging.error(f"HTTP {response.status} error with model {selected_model}: {response_text}")
+                    response.raise_for_status()
+                    
+        except aiohttp.ClientResponseError:
+            raise  # Re-raise HTTP errors
+        except Exception as e:
+            logging.error(f"Unexpected error making request with model {selected_model}: {e}")
+            raise
                 
     def build_story_prompt(self, story_id: int, character: str, setting: str, 
                           tags: list, story_type: str, base_story: str = None) -> str:
@@ -256,9 +446,9 @@ Adapt the core lesson and emotional journey, but create fresh characters, plot, 
         
     async def test_connection(self) -> bool:
         """
-        Test the API connection with a simple request
+        Test the API connection and validate model accessibility
         """
-        test_prompt = """Create a very short test story (50 words) about a happy cat in a garden. 
+        test_prompt = """Create a very short test story (50 words) about a happy cat in a garden.
 
 Format:
 ---
@@ -278,9 +468,20 @@ The End."""
 
         try:
             async with self:
+                # First validate all configured models
+                validation_results = await self.validate_all_models()
+                accessible_models = [model for model, accessible in validation_results.items() if accessible]
+                
+                if not accessible_models:
+                    logging.error("No accessible models found during connection test")
+                    return False
+                
+                logging.info(f"Found {len(accessible_models)} accessible models: {accessible_models}")
+                
+                # Test story generation with a random model
                 result = await self.generate_story(test_prompt, max_retries=1)
                 if result and "test_001" in result:
-                    logging.info("API connection test successful")
+                    logging.info("API connection and model validation successful")
                     return True
                 else:
                     logging.error("API connection test failed - invalid response")
