@@ -1,5 +1,8 @@
 ## Fable Flux Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Fable Flux is an AI-powered educational story generation system for children's
 stories. It includes Python story generation, dataset publishing, model
 fine-tuning notes, Modal/vLLM serving, and a Next.js frontend.
