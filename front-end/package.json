@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "NEXT_PRIVATE_BUILD_WORKER=1 next build --no-lint",
     "start": "next start",
     "lint": "eslint"
   },

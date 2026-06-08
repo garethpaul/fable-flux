@@ -18,6 +18,7 @@ htmlcov/
 # Frontend local artifacts
 front-end/.env.local
 front-end/.next/
+front-end/tsconfig.tsbuildinfo
 front-end/node_modules/
 node_modules/
 .vercel
