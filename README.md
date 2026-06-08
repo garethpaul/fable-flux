@@ -1,5 +1,8 @@
 # Synthetic Stories: AI-Powered Children's Educational Story Generation Platform
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 A comprehensive end-to-end system for generating, fine-tuning, serving, and displaying high-quality educational children's stories using state-of-the-art AI technologies.
 
 WebApp: https://fable-flux.vercel.app
