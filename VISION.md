@@ -42,7 +42,7 @@ API keys and model-serving credentials must remain in environment configuration.
 Prompts, generated stories, and user inputs should not be logged or published
 without a clear purpose and consent.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Committed API tokens, model credentials, or private generated datasets
 - Story-generation changes without validation or safety notes
