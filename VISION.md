@@ -48,3 +48,6 @@ without a clear purpose and consent.
 - Story-generation changes without validation or safety notes
 - Frontend proxy behavior that exposes server-side keys
 - Model or dataset claims without reproducible configuration
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
