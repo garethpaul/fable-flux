@@ -51,7 +51,7 @@ def check_environment():
         print("  ✓ POE_API_KEY environment variable set")
     else:
         print("  ⚠ POE_API_KEY environment variable not set")
-        print("    Set it with: export POE_API_KEY='your_api_key_here'")
+        print("    Set it with: export POE_API_KEY='your_poe_api_key_here'")
     
     return True
 
@@ -127,8 +127,9 @@ echo "Next steps:"
 echo "1. Activate the virtual environment:"
 echo "   source .venv/bin/activate"
 echo ""
-echo "2. Set your API key:"
-echo "   export POE_API_KEY='your_api_key_here'"
+echo "2. Set required service keys:"
+echo "   export POE_API_KEY='your_poe_api_key_here'"
+echo "   export HF_TOKEN='your_huggingface_token_here'"
 echo ""
 echo "3. Run a test:"
 echo "   python generate_stories.py --test"
@@ -161,7 +162,7 @@ def main():
     print("\nSetup completed successfully!")
     print("\nNext steps:")
     print("1. Install dependencies: pip install -r requirements.txt")
-    print("2. Set API key: export POE_API_KEY='your_api_key_here'")
+    print("2. Set API keys: export POE_API_KEY='your_poe_api_key_here' HF_TOKEN='your_huggingface_token_here'")
     print("3. Run test: python generate_stories.py --test")
     print("4. Start generation: python generate_stories.py --generate")
 

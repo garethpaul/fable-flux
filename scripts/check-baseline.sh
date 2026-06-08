@@ -3,6 +3,7 @@ set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"
+PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
   find "$ROOT_DIR" -maxdepth 4 -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
@@ -38,17 +39,18 @@ for path in \
   "generate_stories.py" \
   "requirements.txt" \
   "serving/main.py" \
+  "setup.py" \
   "src/diversity_tracker.py" \
+  "src/poe_client.py" \
   "src/story_validator.py" \
   "tests/test_diversity_tracker.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
-  "tests/test_poe_client.py" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
 
-python3 -m py_compile \
+"$PYTHON" -m py_compile \
   "$ROOT_DIR/generate_stories.py" \
   "$ROOT_DIR/upload_to_huggingface.py" \
   "$ROOT_DIR/setup.py" \
@@ -56,16 +58,9 @@ python3 -m py_compile \
   "$ROOT_DIR"/src/*.py \
   "$ROOT_DIR"/tests/*.py
 
-python3 -m unittest discover -s "$ROOT_DIR/tests" -p "test*.py"
+"$PYTHON" -m unittest discover -s "$ROOT_DIR/tests" -p "test*.py"
 
-tracked_generated=$(git -C "$ROOT_DIR" ls-files | grep -E '(^story_generator/|(^|/)__pycache__/|\.pyc$)' || true)
-if [ -n "$tracked_generated" ]; then
-  printf '%s\n' "Generated Python environments or bytecode are still tracked:" >&2
-  printf '%s\n' "$tracked_generated" | sed -n '1,40p' >&2
-  exit 1
-fi
-
-python3 - "$ROOT_DIR" <<'PY'
+"$PYTHON" - "$ROOT_DIR" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -118,7 +113,8 @@ fi
 if ! grep -Fq "POE_API_KEY=your_poe_api_key_here" "$ROOT_DIR/.env.example" ||
   ! grep -Fq "HF_TOKEN=your_huggingface_token_here" "$ROOT_DIR/.env.example" ||
   ! grep -Fq "MODAL_API_KEY=your_modal_api_key_here" "$ROOT_DIR/front-end/.env.local.example" ||
-  ! grep -Fq "MODAL_API_URL=https://your-modal-endpoint.example.com/v1/chat/completions" "$ROOT_DIR/front-end/.env.local.example"; then
+  ! grep -Fq "MODAL_API_URL=https://your-modal-endpoint.example.com/v1/chat/completions" "$ROOT_DIR/front-end/.env.local.example" ||
+  ! grep -Fq "MODAL_MODEL=garethpaul/gpt-oss-20b-fableflux-mxfp4" "$ROOT_DIR/front-end/.env.local.example"; then
   printf '%s\n' "Environment examples must use placeholders for Poe, Hugging Face, and Modal configuration." >&2
   exit 1
 fi
@@ -132,17 +128,42 @@ fi
 route="$ROOT_DIR/front-end/src/app/api/chat/completions/route.ts"
 if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_API_URL" "$route" ||
+  ! grep -Fq "process.env.MODAL_MODEL" "$route" ||
   ! grep -Fq "new URL" "$route" ||
   ! grep -Fq 'url.protocol === "https:"' "$route" ||
   ! grep -Fq "trimmedPrompt.length === 0 || trimmedPrompt.length > 200" "$route" ||
   grep -Eq "Modal_API_KEY|POE_API_KEY" "$route" ||
+  grep -Fq "GPT-5-Mini" "$route" ||
   grep -Eq "console\\.error\\(.*(storyContent|modalData|errorText)" "$route"; then
   printf '%s\n' "Frontend proxy must require env-backed Modal config, HTTPS URL parsing, bounded prompts, and no raw generated-content logs." >&2
   exit 1
 fi
 
+if grep -Eq 'shell=True|Popen\(" "\.join\(cmd\)' "$ROOT_DIR/serving/main.py" ||
+  ! grep -Fq "subprocess.Popen(cmd)" "$ROOT_DIR/serving/main.py"; then
+  printf '%s\n' "Modal serving launcher must pass argv directly and avoid shell=True." >&2
+  exit 1
+fi
+
+tracked_generated=$(
+  git -C "$ROOT_DIR" ls-files |
+    grep -E '(^story_generator/|(^|/)__pycache__/|\.pyc$)' |
+    while IFS= read -r path; do
+      if [ -e "$ROOT_DIR/$path" ]; then
+        printf '%s\n' "$path"
+      fi
+    done || true
+)
+if [ -n "$tracked_generated" ]; then
+  printf '%s\n' "Generated Python environment/cache artifacts must not be tracked:" >&2
+  printf '%s\n' "$tracked_generated" | sed -n '1,40p' >&2
+  exit 1
+fi
+
 if ! grep -Fq "__pycache__/" "$ROOT_DIR/.gitignore" ||
   ! grep -Fq "story_generator/" "$ROOT_DIR/.gitignore" ||
+  ! grep -Fq ".venv/" "$ROOT_DIR/.gitignore" ||
+  ! grep -Fq "*.py[cod]" "$ROOT_DIR/.gitignore" ||
   ! grep -Fq "front-end/node_modules/" "$ROOT_DIR/.gitignore" ||
   ! grep -Fq "output/generated_stories/" "$ROOT_DIR/.gitignore"; then
   printf '%s\n' "Generated Python/frontend artifacts must stay ignored." >&2

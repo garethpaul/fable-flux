@@ -42,7 +42,7 @@ def serve():
         "-O.cudagraph_capture_sizes=[1,2,4,8,16,32]"
     ]
     print("Launching:", " ".join(cmd))
-    subprocess.Popen(" ".join(cmd), shell=True)
+    subprocess.Popen(cmd)
 
 @app.local_entrypoint()
 def url():

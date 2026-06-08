@@ -112,7 +112,7 @@ export default function StoryPage() {
                     ? story.characters
                     : Array.isArray(story.characters)
                     ? story.characters
-                        .map((char, index) =>
+                        .map((char) =>
                           typeof char === "string"
                             ? char
                             : char.name || "Character"
