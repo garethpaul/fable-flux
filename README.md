@@ -1,5 +1,8 @@
 # fable-flux
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 ## Overview
 
 `garethpaul/fable-flux` is a Python project. Personalized education through fables (books)
@@ -79,4 +82,3 @@ Keep changes small and tied to the project that is already present in this repos
 Prior README summary:
 
 > Synthetic Stories: AI-Powered Children's Educational Story Generation Platform <!-- README-OVERVIEW-IMAGE --> A comprehensive end-to-end system for generating, fine-tuning, serving, and displaying high-quality educational children's stories using state-of-the-art AI technologies. WebApp: https://fable-flux.vercel.app 🌟 Project Overview This project combines multiple cutting-edge technologies to create a complete pipeline for children's educational story generation:
-
