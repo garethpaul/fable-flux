@@ -76,9 +76,3 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
-
-## Existing Project Notes
-
-Prior README summary:
-
-> Synthetic Stories: AI-Powered Children's Educational Story Generation Platform A comprehensive end-to-end system for generating, fine-tuning, serving, and displaying high-quality educational children's stories using state-of-the-art AI technologies. WebApp: https://fable-flux.vercel.app 🌟 Project Overview This project combines multiple cutting-edge technologies to create a complete pipeline for children's educational story generation:
