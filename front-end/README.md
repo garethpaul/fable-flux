@@ -6,7 +6,7 @@ A beautiful React/Next.js frontend application that generates personalized bedti
 
 - **Interactive Landing Page**: Beautiful gradient design with clear call-to-action
 - **Modal-Based Story Input**: Clean modal interface for entering story prompts
-- **AI Story Generation**: Powered by GPT-5-Mini via Poe API
+- **AI Story Generation**: Powered by a Modal-hosted Fable Flux model
 - **Story Display Page**: Beautifully formatted story presentation
 - **Responsive Design**: Mobile-first design that works on all devices
 - **Error Handling**: Comprehensive error states with user-friendly messages
@@ -19,7 +19,7 @@ A beautiful React/Next.js frontend application that generates personalized bedti
 
 - Node.js 18+
 - npm or yarn
-- Valid Poe API key
+- Valid Modal API key and HTTPS completion endpoint
 
 ### Installation
 
@@ -37,7 +37,7 @@ A beautiful React/Next.js frontend application that generates personalized bedti
 
 3. **Configure environment variables:**
 
-   You can set the POE_API_KEY in two ways:
+   You can set the Modal proxy configuration in two ways:
 
    **Option 1: Using .env.local file (recommended for development):**
 
@@ -45,16 +45,19 @@ A beautiful React/Next.js frontend application that generates personalized bedti
    cp .env.local.example .env.local
    ```
 
-   Edit `.env.local` and add your Poe API key:
+   Edit `.env.local` and add your Modal settings:
 
    ```env
-   POE_API_KEY=your_actual_poe_api_key_here
+   MODAL_API_KEY=your_actual_modal_api_key_here
+   MODAL_API_URL=https://your-modal-endpoint.example.com/v1/chat/completions
+   MODAL_MODEL=garethpaul/gpt-oss-20b-fableflux-mxfp4
    ```
 
    **Option 2: Using system environment variables (recommended for production):**
 
    ```bash
-   export POE_API_KEY=your_actual_poe_api_key_here
+   export MODAL_API_KEY=your_actual_modal_api_key_here
+   export MODAL_API_URL=https://your-modal-endpoint.example.com/v1/chat/completions
    ```
 
    Note: System environment variables take precedence over .env.local settings.
@@ -77,7 +80,7 @@ front-end/
 │   │   ├── api/
 │   │   │   └── chat/
 │   │   │       └── completions/
-│   │   │           └── route.ts # Poe API proxy endpoint
+│   │   │           └── route.ts # Modal API proxy endpoint
 │   │   ├── story/
 │   │   │   └── page.tsx        # Story display page
 │   │   ├── layout.tsx          # Root layout with metadata
@@ -114,7 +117,7 @@ front-end/
 
    - Loading spinner displays "Creating your story..."
    - API call made to `/api/chat/completions`
-   - Server proxies request to Poe API with GPT-5-Mini model
+   - Server proxies request to the configured Modal model endpoint
 
 4. **Story Display** (`/story`)
    - Generated story displayed with beautiful formatting
@@ -123,9 +126,9 @@ front-end/
 
 ## 🔧 API Integration
 
-### Poe API Proxy
+### Modal API Proxy
 
-The application includes a Next.js API route that safely proxies requests to the Poe API:
+The application includes a Next.js API route that safely proxies requests to the Modal-hosted model:
 
 **Endpoint:** `POST /api/chat/completions`
 
@@ -151,10 +154,10 @@ The application includes a Next.js API route that safely proxies requests to the
 
 ### Security Features
 
-- **Server-side API Key**: Poe API key is stored securely server-side
+- **Server-side API Key**: Modal API key is stored securely server-side
 - **Input Validation**: Prompt validation and sanitization
 - **Error Handling**: Comprehensive error responses
-- **Rate Limiting**: Configurable through Poe API settings
+- **Endpoint Validation**: Modal endpoint must be configured as HTTPS
 
 ## 🎨 Design System
 
@@ -197,9 +200,11 @@ npm run lint
 
 ### Environment Variables
 
-| Variable      | Description                           | Required |
-| ------------- | ------------------------------------- | -------- |
-| `POE_API_KEY` | Your Poe API key for story generation | Yes      |
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| `MODAL_API_KEY` | Modal API key used by the server-side proxy | Yes |
+| `MODAL_API_URL` | HTTPS Modal chat completions endpoint | Yes |
+| `MODAL_MODEL` | Served model name; defaults to the Fable Flux model | No |
 
 ### Adding New Features
 
@@ -214,14 +219,14 @@ npm run lint
 
 1. **"Server configuration error"**
 
-   - Ensure `POE_API_KEY` is set either as a system environment variable or in `.env.local`
+   - Ensure `MODAL_API_KEY` and `MODAL_API_URL` are set either as system environment variables or in `.env.local`
    - System environment variables take precedence over .env.local
    - Restart the development server after adding environment variables
    - Check the terminal output for specific error messages about missing API key
 
 2. **"Failed to generate story"**
 
-   - Check that your Poe API key is valid
+   - Check that your Modal API key and HTTPS endpoint are valid
    - Verify you have sufficient API credits
    - Check network connectivity
 
@@ -254,7 +259,7 @@ The application is fully responsive and optimized for:
 ### Vercel (Recommended)
 
 1. Connect your GitHub repository to Vercel
-2. Add `POE_API_KEY` environment variable in Vercel dashboard
+2. Add `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
 ### Environment Variables in Production
@@ -264,7 +269,7 @@ For production deployments, always use your platform's environment variable conf
 - **Vercel**: Environment Variables section in project settings
 - **Netlify**: Environment variables in site settings
 - **Railway**: Environment variables in service settings
-- **Docker**: Use `-e POE_API_KEY=your_key` or environment files
+- **Docker**: Use `-e MODAL_API_KEY=your_key -e MODAL_API_URL=https://...` or environment files
 
 ### Other Platforms
 
@@ -290,7 +295,7 @@ For issues or questions:
 
 1. Check the troubleshooting section above
 2. Review browser console and terminal logs
-3. Verify your Poe API key and credits
+3. Verify your Modal API key, HTTPS endpoint, and served model name
 4. Check network connectivity
 
 ---

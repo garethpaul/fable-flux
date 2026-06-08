@@ -57,17 +57,19 @@ def check_environment():
 
 def create_example_env():
     """Create example environment file"""
-    env_content = """# Story Generation Environment Variables
-# Copy this file to .env and set your actual values
+    env_content = """# Fable Flux environment variables
+# Copy this file to .env or export the values in your shell. Do not commit real secrets.
 
-# Required: Your Poe API key
-POE_API_KEY=your_api_key_here
+# Required for Python story generation
+POE_API_KEY=your_poe_api_key_here
 
-# Optional: Adjust rate limiting
-# POE_RATE_LIMIT=10
+# Required for Hugging Face dataset uploads
+HF_TOKEN=your_huggingface_token_here
 
-# Optional: Model selection
-# POE_MODEL=gpt-4
+# Required by the Next.js frontend API proxy. See front-end/.env.local.example.
+MODAL_API_KEY=your_modal_api_key_here
+MODAL_API_URL=https://your-modal-app.modal.run/v1/chat/completions
+MODAL_MODEL=garethpaul/gpt-oss-20b-fableflux-mxfp4
 """
     
     with open('.env.example', 'w') as f:
@@ -84,6 +86,10 @@ PyYAML>=6.0
 # Optional dependencies for enhanced validation
 textstat>=0.7.0
 textblob>=0.17.0
+
+# Hugging Face integration
+huggingface_hub>=0.17.0
+datasets>=2.14.0
 
 # Development dependencies (optional)
 pytest>=7.0.0
@@ -104,8 +110,8 @@ echo "Setting up Story Generation System..."
 
 # Create virtual environment
 echo "Creating virtual environment..."
-python3 -m venv story_generator
-source story_generator/bin/activate  # On Windows: story_generator\\Scripts\\activate
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\\Scripts\\activate
 
 # Install dependencies
 echo "Installing dependencies..."
@@ -119,7 +125,7 @@ echo "Setup complete!"
 echo ""
 echo "Next steps:"
 echo "1. Activate the virtual environment:"
-echo "   source story_generator/bin/activate"
+echo "   source .venv/bin/activate"
 echo ""
 echo "2. Set your API key:"
 echo "   export POE_API_KEY='your_api_key_here'"

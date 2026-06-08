@@ -1,78 +1,114 @@
-# fable-flux
+# Fable Flux
 
 <!-- README-OVERVIEW-IMAGE -->
 ![Project overview](docs/readme-overview.svg)
 
-## Overview
-
-`garethpaul/fable-flux` is a Python project. Personalized education through fables (books)
-
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `main` branch. The project language mix found during review was: no dominant source language detected.
+Fable Flux is an AI-assisted educational story pipeline. The repository contains
+Python tools for generating and validating children's educational stories,
+Hugging Face dataset upload helpers, Modal/vLLM serving configuration, and a
+Next.js frontend that proxies story requests to a Modal-hosted model.
 
 ## Repository Contents
 
-- `README.md` - project overview and local usage notes
-- `requirements.txt` - Python dependency or packaging metadata
-- `config` - source or example code
-- `data` - source or example code
-- `docs` - source or example code
-- `front-end` - source or example code
-- `logs` - source or example code
-- `output` - source or example code
-- `SECURITY.md` - security reporting and disclosure guidance
-- `serving` - source or example code
-- `setup.py` - Python dependency or packaging metadata
-- `src` - source or example code
+- `src/` - Python generation, validation, diversity tracking, and dataset upload code
+- `config/generation_config.yaml` - generation ranges, model choices, retry limits, and quality thresholds
+- `data/stories/` - checked-in source story corpus
+- `output/generated_stories/` - generated story artifacts that are already tracked in this repo
+- `serving/main.py` - Modal web server for the Fable Flux fine-tuned model
+- `front-end/` - Next.js app and API proxy for interactive story generation
+- `scripts/check-baseline.sh` - offline baseline verification used for maintenance changes
 
-Additional scan context:
+## Setup
 
-- Source directories: config, data, docs, front-end, logs, output, and 3 more
-- Dependency and build manifests: requirements.txt, setup.py
-- Entry points or build surfaces: none detected
-- Test-looking files: no obvious test files detected
-
-## Getting Started
-
-### Prerequisites
-
-- Git
-- Python matching the era of the project
-
-### Setup
+Use Python 3.7 or newer for the generation tools.
 
 ```bash
-git clone https://github.com/garethpaul/fable-flux.git
-cd fable-flux
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+Copy `.env.example` to `.env` or export the values in your shell. Real tokens
+must stay out of git.
 
-## Running or Using the Project
+Required environment variables:
 
-- No single runtime entry point was identified. Start by reading the source files and manifests listed above.
+- `POE_API_KEY` for Python story generation through Poe
+- `HF_TOKEN` for Hugging Face dataset uploads
+- `MODAL_API_KEY` and `MODAL_API_URL` for the frontend proxy
+- `MODAL_MODEL` when the Modal served model name differs from the default
 
-## Testing and Verification
+## Story Generation
 
-- No dedicated automated test command was identified from the checked-in files. Verify changes by running the relevant build or manually exercising the sample.
+Run a small Poe-backed test batch:
 
-When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
+```bash
+python generate_stories.py --test --size 5
+```
 
-## Configuration and Secrets
+Run a specific range:
 
-- No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
+```bash
+python generate_stories.py --batch 1501 1510
+```
 
-## Security and Privacy Notes
+Generated progress and logs are local runtime artifacts. Avoid committing new
+logs, virtual environments, cache files, or generated outputs unless they are
+intentional fixtures for review.
 
-- Review changes touching network requests, sockets, or service endpoints; examples from the scan include data/stories/story_109.md.
-- Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include config/generation_config.yaml, data/stories/story_009.md.
-- Review changes touching database, model, or persistence code; examples from the scan include config/generation_config.yaml.
+## Dataset Upload
 
-## Maintenance Notes
+Upload parsed story data to Hugging Face:
 
-- See `SECURITY.md` for vulnerability reporting and safe research guidance.
-- See `VISION.md` for project direction and contribution guardrails.
+```bash
+python upload_to_huggingface.py --quick --repo-name username/children-stories-dataset --private
+```
 
-## Contributing
+The uploader converts markdown story files into JSONL and writes temporary
+artifacts under `output/huggingface/`.
 
-Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
+## Frontend
+
+```bash
+cd front-end
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+The API route at `front-end/src/app/api/chat/completions/route.ts` reads
+`MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
+validates prompt length, requires an HTTPS Modal endpoint, and avoids logging
+raw upstream story content.
+
+## Verification
+
+Run the offline baseline:
+
+```bash
+make check
+```
+
+The baseline compiles Python entry points, runs synthetic validator tests plus
+offline diversity and prompt tests, performs static frontend proxy checks, and
+runs frontend lint when `front-end/node_modules` is present.
+
+Run frontend checks after touching the app:
+
+```bash
+cd front-end
+npm run lint
+npm run build
+```
+
+## Security And Privacy
+
+- Never commit Poe, Hugging Face, Modal, or model-serving credentials.
+- Do not log prompts, generated stories, user inputs, or raw model responses
+  unless there is a specific reviewed need.
+- Keep story safety, age appropriateness, and educational value validation in
+  place for generation changes.
+- Treat public dataset and model claims as reproducible artifacts tied to
+  checked-in configuration.
+
+See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.

@@ -21,9 +21,24 @@ Priority:
   educational value
 - Keep generated datasets and model artifacts traceable to configuration
 
+Current baseline:
+
+- Tracked local Python virtualenv and bytecode cache artifacts have been
+  removed.
+- `.gitignore` excludes generated environments, Python caches, frontend
+  installs, logs, and local generated output.
+- `scripts/check-baseline.sh` compiles app-owned Python sources and verifies
+  generated environments are not tracked.
+- Diversity selection accounts for unused characters and settings before
+  reusing previously selected story elements.
+- The frontend proxy requires environment-backed Modal configuration and
+  server-side prompt bounds.
+- Local Python and frontend environments are recreated from `requirements.txt`
+  and `front-end/package-lock.json`.
+
 Next priorities:
 
-- Strengthen tests around prompt construction, validation, and retry behavior
+- Add API route tests and broaden retry/error-path coverage
 - Document dataset publishing and model-serving ownership boundaries
 - Keep frontend API proxy behavior secure and user-friendly
 - Add evaluation notes for story safety, age appropriateness, and educational fit
@@ -31,6 +46,8 @@ Next priorities:
 Contribution rules:
 
 - One PR = one focused generation, validation, serving, frontend, or docs change.
+- Run `scripts/check-baseline.sh` before pushing repository hygiene or Python
+  pipeline changes.
 - Run the relevant Python checks and frontend `npm run lint`/`npm run build`
   before pushing touched areas.
 - Document changes to prompts, model choices, datasets, or API contracts.

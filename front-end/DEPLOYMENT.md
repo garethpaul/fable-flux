@@ -8,7 +8,7 @@ This guide will help you deploy your Fable Flux application to Vercel with a cus
 
 - GitHub account
 - Vercel account (free at [vercel.com](https://vercel.com))
-- Your POE_API_KEY ready
+- Your `MODAL_API_KEY` and HTTPS `MODAL_API_URL` ready
 
 ### 2. Prepare Your Repository
 
@@ -46,10 +46,12 @@ git push -u origin main
    - **Build Command**: `npm run build` (default)
    - **Output Directory**: `.next` (default)
 
-5. **Add Environment Variable:**
+5. **Add Environment Variables:**
 
    - Click "Environment Variables"
-   - Add: `POE_API_KEY` = `your_actual_poe_api_key_here`
+   - Add: `MODAL_API_KEY` = `your_actual_modal_api_key_here`
+   - Add: `MODAL_API_URL` = `https://your-modal-endpoint.example.com/v1/chat/completions`
+   - Add: `MODAL_MODEL` = `garethpaul/gpt-oss-20b-fableflux-mxfp4` if your served model name differs from the default
    - Make sure it's set for Production, Preview, and Development
 
 6. **Click "Deploy"**
@@ -94,9 +96,11 @@ In your Vercel project dashboard:
 1. **Go to Settings > Environment Variables**
 2. **Add the following:**
 
-| Key           | Value                        | Environments                     |
-| ------------- | ---------------------------- | -------------------------------- |
-| `POE_API_KEY` | your_actual_poe_api_key_here | Production, Preview, Development |
+| Key | Value | Environments |
+| --- | ----- | ------------ |
+| `MODAL_API_KEY` | your_actual_modal_api_key_here | Production, Preview, Development |
+| `MODAL_API_URL` | https://your-modal-endpoint.example.com/v1/chat/completions | Production, Preview, Development |
+| `MODAL_MODEL` | garethpaul/gpt-oss-20b-fableflux-mxfp4 | Production, Preview, Development |
 
 3. **Redeploy** after adding environment variables
 
@@ -115,7 +119,9 @@ Create `front-end/vercel.json` for advanced configuration:
     }
   ],
   "env": {
-    "POE_API_KEY": "@poe_api_key"
+    "MODAL_API_KEY": "@modal_api_key",
+    "MODAL_API_URL": "@modal_api_url",
+    "MODAL_MODEL": "@modal_model"
   },
   "regions": ["iad1"]
 }
@@ -141,7 +147,8 @@ synthetic-stories/
 ### Environment Variables
 
 - **Never commit `.env.local`** to Git
-- **Always set POE_API_KEY** in Vercel dashboard
+- **Always set `MODAL_API_KEY` and `MODAL_API_URL`** in Vercel dashboard
+- **Use HTTPS endpoints only** for `MODAL_API_URL`
 - **Use the same key** for all environments (Production, Preview, Development)
 
 ### Build Configuration
@@ -165,7 +172,9 @@ synthetic-stories/
   - [ ] Project name: `fableflux` (or variant)
   - [ ] Framework: Next.js
 - [ ] Environment variable added:
-  - [ ] `POE_API_KEY` set in Vercel dashboard
+  - [ ] `MODAL_API_KEY` set in Vercel dashboard
+  - [ ] `MODAL_API_URL` set in Vercel dashboard
+  - [ ] `MODAL_MODEL` set if the served model name is not the default
 - [ ] First deployment successful
 - [ ] Custom domain configured (if desired)
 - [ ] Application tested on production URL
@@ -182,7 +191,7 @@ npm run build
 
 ### Environment Variable Issues
 
-- Ensure `POE_API_KEY` is set in Vercel dashboard
+- Ensure `MODAL_API_KEY` and `MODAL_API_URL` are set in Vercel dashboard
 - Redeploy after adding environment variables
 - Check spelling and case sensitivity
 

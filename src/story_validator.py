@@ -6,7 +6,7 @@ Validates generated stories for format, content quality, and educational value
 import re
 import yaml
 import logging
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 from collections import Counter
 import json
 
@@ -43,7 +43,7 @@ class StoryValidator:
             'complex_words': ['subsequently', 'nevertheless', 'consequently', 'furthermore', 'moreover']
         }
         
-    def validate_story(self, content: str) -> Tuple[bool, Dict[str, any]]:
+    def validate_story(self, content: str) -> Tuple[bool, Dict[str, Any]]:
         """
         Comprehensive story validation
         

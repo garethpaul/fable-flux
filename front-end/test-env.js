@@ -1,22 +1,18 @@
 // Test script to verify environment variable configuration
-console.log("Testing POE_API_KEY environment variable configuration...\n");
+console.log("Testing Fable Flux frontend environment configuration...\n");
 
-// Check if POE_API_KEY is available from environment
-const apiKey = process.env.POE_API_KEY;
+const requiredVars = ["MODAL_API_KEY", "MODAL_API_URL"];
+const missingVars = requiredVars.filter((name) => !process.env[name]);
 
-if (apiKey) {
-  console.log("✅ POE_API_KEY found in environment variables");
-  console.log(`   Key starts with: ${apiKey.substring(0, 10)}...`);
-  console.log(`   Key length: ${apiKey.length} characters`);
+if (missingVars.length === 0) {
+  console.log("Required Modal environment variables are set.");
 } else {
-  console.log("❌ POE_API_KEY not found in environment variables");
-  console.log("   Please set POE_API_KEY either:");
-  console.log(
-    "   1. As a system environment variable: export POE_API_KEY=your_key"
-  );
-  console.log("   2. In .env.local file: POE_API_KEY=your_key");
+  console.log(`Missing required variables: ${missingVars.join(", ")}`);
+  console.log("Set them in the system environment or front-end/.env.local.");
 }
 
-console.log("\nEnvironment variable precedence:");
-console.log("1. System environment variables (highest priority)");
-console.log("2. .env.local file (fallback for development)");
+if (process.env.MODAL_MODEL) {
+  console.log("MODAL_MODEL override is set.");
+} else {
+  console.log("MODAL_MODEL is not set; the API route default will be used.");
+}

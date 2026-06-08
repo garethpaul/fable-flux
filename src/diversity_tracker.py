@@ -60,11 +60,12 @@ class DiversityTracker:
         if not characters:
             raise ValueError("Characters list is empty")
             
-        # If we haven't used all characters equally, pick the least used
+        # If we haven't used all characters equally, pick the least used,
+        # including characters that have not appeared in usage state yet.
         if self.character_usage:
-            min_usage = min(self.character_usage.values())
-            least_used = [char for char, count in self.character_usage.items() 
-                         if count == min_usage and char in characters]
+            usage_counts = {char: self.character_usage.get(char, 0) for char in characters}
+            min_usage = min(usage_counts.values())
+            least_used = [char for char, count in usage_counts.items() if count == min_usage]
             if least_used:
                 character = random.choice(least_used)
                 logging.debug(f"Selected least used character: {character} (usage: {min_usage})")
@@ -83,11 +84,12 @@ class DiversityTracker:
         if not settings:
             raise ValueError("Settings list is empty")
             
-        # If we haven't used all settings equally, pick the least used
+        # If we haven't used all settings equally, pick the least used,
+        # including settings that have not appeared in usage state yet.
         if self.setting_usage:
-            min_usage = min(self.setting_usage.values())
-            least_used = [setting for setting, count in self.setting_usage.items() 
-                         if count == min_usage and setting in settings]
+            usage_counts = {setting: self.setting_usage.get(setting, 0) for setting in settings}
+            min_usage = min(usage_counts.values())
+            least_used = [setting for setting, count in usage_counts.items() if count == min_usage]
             if least_used:
                 setting = random.choice(least_used)
                 logging.debug(f"Selected least used setting: {setting} (usage: {min_usage})")

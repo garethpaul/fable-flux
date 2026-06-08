@@ -1,1 +1,28 @@
+.env
+.env.*
+!.env.example
+!front-end/.env.local.example
+
+# Python environments and generated files
+.venv/
+venv/
+env/
+story_generator/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Frontend local artifacts
+front-end/.env.local
+front-end/.next/
+front-end/node_modules/
+node_modules/
 .vercel
+
+# Local generation outputs and logs
+logs/
+output/generated_stories/
+output/huggingface/
