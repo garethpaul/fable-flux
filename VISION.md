@@ -33,7 +33,7 @@ Contribution rules:
 - Document changes to prompts, model choices, datasets, or API contracts.
 - Keep generated outputs out of source control unless they are intentional fixtures.
 
-## Safety And Privacy
+## Security And Responsible Use
 
 Children's educational content needs careful safety boundaries. Generated stories
 should avoid inappropriate content, unsafe advice, and hidden data collection.
