@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Children's educational content needs careful safety boundaries. Generated stories
 should avoid inappropriate content, unsafe advice, and hidden data collection.
 
