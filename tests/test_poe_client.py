@@ -1,6 +1,16 @@
 import unittest
+import asyncio
 
 from src.poe_client import PoeClient
+
+
+class FakePoeResponse:
+    def __init__(self, status, body):
+        self.status = status
+        self._body = body
+
+    async def text(self):
+        return self._body
 
 
 class PoeClientTests(unittest.TestCase):
@@ -30,6 +40,19 @@ class PoeClientTests(unittest.TestCase):
         self.assertEqual("23 characters", summary)
         self.assertNotIn("private", summary)
         self.assertNotIn("story", summary)
+
+    def test_model_validation_logs_response_summary_without_raw_body(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        response = FakePoeResponse(400, '{"error":"invalid model private details"}')
+
+        with self.assertLogs(level="WARNING") as context:
+            result = asyncio.run(client._process_validation_response(response, "test-model"))
+
+        logs = "\n".join(context.output)
+        self.assertFalse(result)
+        self.assertIn("Poe validation response body omitted from logs", logs)
+        self.assertIn("41 characters", logs)
+        self.assertNotIn("private details", logs)
 
 
 if __name__ == "__main__":

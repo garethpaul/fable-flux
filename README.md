@@ -82,7 +82,8 @@ validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
 avoids logging raw upstream story content.
 
 The Python Poe client also omits raw upstream response bodies from parse and
-HTTP error logs; it records response length instead.
+HTTP error logs; it records response length instead. Poe model validation
+response bodies are also omitted from logs.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
@@ -121,6 +122,8 @@ npm run build
 - Never commit Poe, Hugging Face, Modal, or model-serving credentials.
 - Do not log prompts, generated stories, user inputs, or raw model responses
   unless there is a specific reviewed need.
+- Poe model validation response bodies should be summarized by length rather
+  than logged directly.
 - Keep story safety, age appropriateness, and educational value validation in
   place for generation changes.
 - Treat public dataset and model claims as reproducible artifacts tied to

@@ -44,6 +44,8 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - The Python Poe client avoids logging raw upstream response bodies and records
   response length for failed parse/HTTP paths.
+- Poe model validation response bodies are also omitted from logs and summarized
+  by length.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
 

@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Omitted raw Poe model validation response bodies from logs and recorded a
+  length summary instead.
 - Rejected non-string story validator `characters`/`tags` metadata in both
   full and quick validation.
 - Rejected scalar or mixed-type uploader `characters`/`tags` metadata before

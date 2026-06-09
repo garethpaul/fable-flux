@@ -183,15 +183,18 @@ class PoeClient:
                 logging.debug(f"Model {model} is accessible")
                 return True
             elif response.status == 400:
-                try:
-                    error_data = await response.json()
-                    error_msg = str(error_data).lower()
-                    if 'model' in error_msg or 'invalid' in error_msg:
-                        logging.warning(f"Model {model} is not accessible: {error_data}")
-                        return False
-                except:
-                    pass
-                logging.warning(f"Model {model} returned 400 error")
+                response_text = await response.text()
+                error_msg = response_text.lower()
+                if 'model' in error_msg or 'invalid' in error_msg:
+                    logging.warning(
+                        f"Model {model} is not accessible; Poe validation response body omitted from logs "
+                        f"({self._response_body_summary(response_text)})"
+                    )
+                    return False
+                logging.warning(
+                    f"Model {model} returned 400 error; Poe validation response body omitted from logs "
+                    f"({self._response_body_summary(response_text)})"
+                )
                 return False
             elif response.status == 404:
                 logging.warning(f"Model {model} not found (404)")
