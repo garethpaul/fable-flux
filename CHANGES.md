@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Hardened the Poe client rate limiter to reject invalid limits and recheck
+  token state after sleeping before allowing another upstream request.
 - Omitted raw Poe model validation response bodies from logs and recorded a
   length summary instead.
 - Rejected non-string story validator `characters`/`tags` metadata in both

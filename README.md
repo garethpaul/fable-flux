@@ -83,7 +83,9 @@ avoids logging raw upstream story content.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
-response bodies are also omitted from logs.
+response bodies are also omitted from logs. Its local rate limiter rejects
+invalid zero or negative limits and rechecks token state after sleeping before
+allowing another upstream request.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
@@ -104,10 +106,10 @@ The `make lint`, `make test`, and `make build` aliases run the same offline
 baseline when no narrower project-specific gate is installed.
 
 The baseline compiles Python entry points, runs synthetic validator tests plus
-offline diversity and prompt tests, performs static frontend proxy checks, and
-runs frontend lint when `front-end/node_modules` is present. It also guards
-frontmatter parsing and quick validation so malformed metadata does not reach
-story quality checks or dataset export records.
+offline diversity, prompt, and Poe rate-limit tests, performs static frontend
+proxy checks, and runs frontend lint when `front-end/node_modules` is present.
+It also guards frontmatter parsing and quick validation so malformed metadata
+does not reach story quality checks or dataset export records.
 
 Run frontend checks after touching the app:
 

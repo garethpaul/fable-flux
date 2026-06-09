@@ -16,11 +16,18 @@ import os
 class RateLimiter:
     """High-performance rate limiter using token bucket algorithm for concurrent requests"""
     
-    def __init__(self, rate: int, per: float = 60.0):
+    def __init__(self, rate: int, per: float = 60.0, clock=time.monotonic, sleep=asyncio.sleep):
+        if rate <= 0:
+            raise ValueError("Rate limit must be positive")
+        if per <= 0:
+            raise ValueError("Rate limit period must be positive")
+
         self.rate = rate  # requests per time period
         self.per = per    # time period in seconds
-        self.allowance = rate
-        self.last_check = time.time()
+        self.allowance = float(rate)
+        self._clock = clock
+        self._sleep = sleep
+        self.last_check = self._clock()
         self._lock = asyncio.Lock()  # Protect against race conditions in concurrent access
         
         # Pre-calculate for efficiency
@@ -29,24 +36,26 @@ class RateLimiter:
         
     async def acquire(self):
         """Wait until we can make a request (thread-safe for concurrent use)"""
-        async with self._lock:
-            current = time.time()
-            time_passed = current - self.last_check
-            self.last_check = current
-            
-            # Add tokens based on time passed
-            self.allowance += time_passed * self.tokens_per_second
-            if self.allowance > self.rate:
-                self.allowance = self.rate
+        while True:
+            async with self._lock:
+                current = self._clock()
+                time_passed = max(0.0, current - self.last_check)
+                self.last_check = current
                 
-            if self.allowance >= 1.0:
-                self.allowance -= 1.0
-                return  # Request can proceed immediately
+                # Add tokens based on time passed
+                self.allowance = min(
+                    float(self.rate),
+                    self.allowance + time_passed * self.tokens_per_second,
+                )
                 
-        # Need to wait - calculate outside the lock to minimize lock time
-        sleep_time = (1.0 - self.allowance) * self.seconds_per_token
-        if sleep_time > 0:
-            await asyncio.sleep(min(sleep_time, 5.0))  # Cap sleep time for responsiveness
+                if self.allowance >= 1.0:
+                    self.allowance -= 1.0
+                    return  # Request can proceed immediately
+
+                sleep_time = (1.0 - self.allowance) * self.seconds_per_token
+
+            if sleep_time > 0:
+                await self._sleep(min(sleep_time, 5.0))  # Cap sleep time for responsiveness
 
 class PoeClient:
     """

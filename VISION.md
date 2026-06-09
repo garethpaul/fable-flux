@@ -46,6 +46,8 @@ Current baseline:
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized
   by length.
+- The Poe client rate limiter validates positive limits and rechecks token
+  state after sleeps before permitting the next upstream request.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
 

@@ -7,6 +7,7 @@ QUICK_FRONTMATTER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-quick-frontma
 UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequence-metadata-guard.md"
 VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
+POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -58,6 +59,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md" \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
+  "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
@@ -112,6 +114,8 @@ if ! grep -Fq "make check" "$ROOT_DIR/README.md" ||
   ! grep -Fq "MODAL_API_URL" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Validator and uploader metadata" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "Poe rate-limit tests" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "rechecks token state after sleeping" "$ROOT_DIR/README.md" ||
   ! grep -Fq "string lists so quality checks" "$ROOT_DIR/README.md" ||
   ! grep -Fq "children's educational" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must document baseline verification, env keys, and responsible story generation scope." >&2
@@ -122,6 +126,7 @@ if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "unused characters and settings" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Story validation requires" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "rate limiter validates positive limits" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "string lists before quick" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "frontend proxy" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION must describe the current baseline and guarded surfaces." >&2
@@ -144,9 +149,15 @@ if ! grep -Fq "usage_counts = {char: self.character_usage.get(char, 0)" "$ROOT_D
 fi
 
 if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "clock=time.monotonic" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "Rate limit must be positive" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "Rate limit period must be positive" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "await self._sleep" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "Poe response body omitted from logs" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "Poe validation response body omitted from logs" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "response body length" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "test_rate_limiter_rejects_invalid_limits" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "test_rate_limiter_rechecks_token_after_waiting" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_logs_response_summary_without_raw_body" "$ROOT_DIR/tests/test_poe_client.py" ||
   grep -Fq "error_data" "$ROOT_DIR/src/poe_client.py" ||
@@ -176,6 +187,11 @@ fi
 
 if ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document Poe model validation logging boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "post-sleep token check" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document Poe rate limiter boundaries." >&2
   exit 1
 fi
 

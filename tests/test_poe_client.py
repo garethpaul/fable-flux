@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 
-from src.poe_client import PoeClient
+from src.poe_client import PoeClient, RateLimiter
 
 
 class FakePoeResponse:
@@ -13,7 +13,41 @@ class FakePoeResponse:
         return self._body
 
 
+class FakeClock:
+    def __init__(self):
+        self.current = 0.0
+        self.sleeps = []
+
+    def now(self):
+        return self.current
+
+    async def sleep(self, seconds):
+        self.sleeps.append(seconds)
+        self.current += seconds
+
+
 class PoeClientTests(unittest.TestCase):
+    def test_rate_limiter_rejects_invalid_limits(self):
+        with self.assertRaisesRegex(ValueError, "Rate limit must be positive"):
+            RateLimiter(rate=0)
+
+        with self.assertRaisesRegex(ValueError, "Rate limit period must be positive"):
+            RateLimiter(rate=1, per=0)
+
+    def test_rate_limiter_rechecks_token_after_waiting(self):
+        clock = FakeClock()
+        limiter = RateLimiter(rate=1, per=10.0, clock=clock.now, sleep=clock.sleep)
+
+        asyncio.run(limiter.acquire())
+        self.assertEqual([], clock.sleeps)
+        self.assertEqual(0.0, limiter.allowance)
+
+        asyncio.run(limiter.acquire())
+
+        self.assertEqual([5.0, 5.0], clock.sleeps)
+        self.assertEqual(10.0, clock.current)
+        self.assertEqual(0.0, limiter.allowance)
+
     def test_poe_client_rejects_empty_model_list(self):
         with self.assertRaisesRegex(ValueError, "Models array cannot be empty"):
             PoeClient(api_key="test-key", config={"models": []})
