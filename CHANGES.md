@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Aligned quick story validation with the full mapping-shaped frontmatter
+  parser and added regression coverage.
 - Rejected non-mapping YAML story frontmatter at parse time and added unit and
   baseline coverage for malformed metadata.
 - Stopped logging raw Poe response bodies on Python client parse and HTTP error

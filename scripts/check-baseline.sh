@@ -3,6 +3,7 @@ set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"
+QUICK_FRONTMATTER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -46,6 +47,7 @@ for path in \
   "tests/test_diversity_tracker.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
+  "docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
@@ -138,8 +140,10 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
 fi
 
 if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "self._parse_story_structure(content)" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "test_quick_validate_rejects_non_mapping_frontmatter" "$ROOT_DIR/tests/test_story_validator.py" ||
   ! grep -Fq "test_non_mapping_frontmatter_is_invalid" "$ROOT_DIR/tests/test_story_validator.py"; then
-  printf '%s\n' "Story validator must reject non-mapping YAML frontmatter at parse time." >&2
+  printf '%s\n' "Story validator must reject non-mapping YAML frontmatter in full and quick validation." >&2
   exit 1
 fi
 
@@ -212,6 +216,11 @@ fi
 
 if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md"; then
   printf '%s\n' "Frontmatter mapping guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$QUICK_FRONTMATTER_PLAN"; then
+  printf '%s\n' "Quick frontmatter guard plan must be marked completed." >&2
   exit 1
 fi
 

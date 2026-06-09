@@ -31,8 +31,8 @@ Current baseline:
   generated environments are not tracked.
 - Diversity selection accounts for unused characters and settings before
   reusing previously selected story elements.
-- Story validation rejects non-mapping YAML frontmatter before content quality
-  checks run.
+- Story validation rejects non-mapping YAML frontmatter in quick and full
+  validation before content quality checks run.
 - The frontend proxy requires environment-backed Modal configuration with an
   HTTPS hostname and server-side prompt bounds.
 - The Python Poe client avoids logging raw upstream response bodies and records

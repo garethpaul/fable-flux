@@ -359,13 +359,10 @@ class StoryValidator:
             if not (self.min_words * 0.8 <= word_count <= self.max_words * 1.2):
                 return False
                 
-            # Check for YAML frontmatter
-            parts = content.split("---", 2)
-            if len(parts) < 3:
-                return False
-                
-            yaml.safe_load(parts[1])  # Will raise exception if invalid
-            return True
+            # Reuse the full parser so quick checks enforce the same
+            # mapping-shaped frontmatter boundary as complete validation.
+            frontmatter, story_content = self._parse_story_structure(content)
+            return frontmatter is not None and story_content is not None
             
         except Exception:
             return False
