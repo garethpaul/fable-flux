@@ -54,6 +54,11 @@ class StoryParser:
             if not isinstance(metadata, dict):
                 logging.warning(f"Frontmatter metadata in {file_path} must be a mapping")
                 return None
+
+            characters = self._metadata_string_list(metadata, "characters", file_path)
+            tags = self._metadata_string_list(metadata, "tags", file_path)
+            if characters is None or tags is None:
+                return None
             
             # Clean and extract story text
             story_text = self._extract_story_text(story_content.strip())
@@ -64,10 +69,10 @@ class StoryParser:
                 "title": self._extract_title(story_content),
                 "text": story_text,
                 "type": metadata.get("type", "unknown"),
-                "characters": metadata.get("characters", []),
+                "characters": characters,
                 "setting": metadata.get("setting", ""),
                 "word_count": metadata.get("words", len(story_text.split())),
-                "tags": metadata.get("tags", []),
+                "tags": tags,
                 "source_file": str(file_path.name),
                 "created_at": datetime.now().isoformat()
             }
@@ -77,6 +82,22 @@ class StoryParser:
         except Exception as e:
             logging.error(f"Error parsing {file_path}: {e}")
             return None
+
+    def _metadata_string_list(self, metadata: Dict[str, Any], field: str, file_path: Path) -> Optional[List[str]]:
+        """Return a non-empty list of strings for list-typed dataset fields."""
+        values = metadata.get(field)
+        if not isinstance(values, list) or not values:
+            logging.warning(f"Frontmatter {field} in {file_path} must be a non-empty list")
+            return None
+
+        normalized = []
+        for value in values:
+            if not isinstance(value, str) or not value.strip():
+                logging.warning(f"Frontmatter {field} in {file_path} must contain only non-empty strings")
+                return None
+            normalized.append(value.strip())
+
+        return normalized
     
     def _extract_title(self, content: str) -> str:
         """Extract title from markdown content"""

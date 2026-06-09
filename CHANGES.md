@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Rejected scalar or mixed-type uploader `characters`/`tags` metadata before
+  Hugging Face dataset record creation, and exposed `make lint`/`make build`
+  aliases for the offline baseline.
 - Aligned quick story validation with the full mapping-shaped frontmatter
   parser and added regression coverage.
 - Rejected non-mapping YAML story frontmatter at parse time and added unit and

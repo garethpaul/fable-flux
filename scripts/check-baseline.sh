@@ -4,6 +4,7 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"
 QUICK_FRONTMATTER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md"
+UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequence-metadata-guard.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -48,6 +49,7 @@ for path in \
   "tests/test_huggingface_uploader.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
+  "docs/plans/2026-06-09-fable-flux-uploader-sequence-metadata-guard.md" \
   "docs/plans/2026-06-09-fable-flux-uploader-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
@@ -150,8 +152,23 @@ if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py"
 fi
 
 if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
+  ! grep -Fq "def _metadata_string_list" "$ROOT_DIR/src/huggingface_uploader.py" ||
+  ! grep -Fq "must be a non-empty list" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "test_parse_story_file_rejects_non_mapping_frontmatter" "$ROOT_DIR/tests/test_huggingface_uploader.py"; then
-  printf '%s\n' "Hugging Face uploader must reject non-mapping YAML frontmatter before dataset record creation." >&2
+  printf '%s\n' "Hugging Face uploader must reject malformed YAML frontmatter before dataset record creation." >&2
+  exit 1
+fi
+
+if ! grep -Fq "test_parse_story_file_rejects_scalar_sequence_metadata" "$ROOT_DIR/tests/test_huggingface_uploader.py" ||
+  ! grep -Fq "test_parse_story_file_rejects_non_string_sequence_items" "$ROOT_DIR/tests/test_huggingface_uploader.py"; then
+  printf '%s\n' "Hugging Face uploader tests must cover malformed characters/tags sequence metadata." >&2
+  exit 1
+fi
+
+if ! grep -Fq "lint: check" "$ROOT_DIR/Makefile" ||
+  ! grep -Fq "test: check" "$ROOT_DIR/Makefile" ||
+  ! grep -Fq "build: check" "$ROOT_DIR/Makefile"; then
+  printf '%s\n' "Makefile must expose lint, test, and build gates." >&2
   exit 1
 fi
 
@@ -234,6 +251,11 @@ fi
 
 if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-frontmatter-guard.md"; then
   printf '%s\n' "Uploader frontmatter guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$UPLOADER_SEQUENCE_PLAN"; then
+  printf '%s\n' "Uploader sequence metadata guard plan must be marked completed." >&2
   exit 1
 fi
 

@@ -87,6 +87,8 @@ HTTP error logs; it records response length instead.
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
 checks run, and by the Hugging Face uploader before dataset records are built.
+Uploader metadata for `characters` and `tags` must be non-empty lists of
+strings so exported JSONL records keep their dataset sequence shape.
 
 ## Verification
 
@@ -95,6 +97,9 @@ Run the offline baseline:
 ```bash
 make check
 ```
+
+The `make lint`, `make test`, and `make build` aliases run the same offline
+baseline when no narrower project-specific gate is installed.
 
 The baseline compiles Python entry points, runs synthetic validator tests plus
 offline diversity and prompt tests, performs static frontend proxy checks, and

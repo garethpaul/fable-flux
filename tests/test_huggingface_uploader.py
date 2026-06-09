@@ -50,6 +50,42 @@ The End.""")
 
         self.assertIsNone(StoryParser().parse_story_file(path))
 
+    def test_parse_story_file_rejects_scalar_sequence_metadata(self):
+        path = self.write_story("""---
+id: story_1
+type: daily_adventure
+characters: Milo
+setting: garden
+words: 12
+tags: kindness
+---
+
+# Milo Shares
+
+Milo shared a pail with a friend.
+
+The End.""")
+
+        self.assertIsNone(StoryParser().parse_story_file(path))
+
+    def test_parse_story_file_rejects_non_string_sequence_items(self):
+        path = self.write_story("""---
+id: story_1
+type: daily_adventure
+characters: ["Milo", 7]
+setting: garden
+words: 12
+tags: ["kindness"]
+---
+
+# Milo Shares
+
+Milo shared a pail with a friend.
+
+The End.""")
+
+        self.assertIsNone(StoryParser().parse_story_file(path))
+
 
 if __name__ == "__main__":
     unittest.main()

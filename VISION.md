@@ -34,7 +34,10 @@ Current baseline:
 - Story validation rejects non-mapping YAML frontmatter in quick and full
   validation before content quality checks run.
 - Dataset upload parsing rejects non-mapping YAML frontmatter before building
-  Hugging Face records.
+  Hugging Face records, and keeps `characters` and `tags` as non-empty string
+  lists before JSONL export.
+- `make lint`, `make test`, and `make build` all run the offline baseline while
+  the project has no narrower installed lint/build toolchain.
 - The frontend proxy requires environment-backed Modal configuration with an
   HTTPS hostname and server-side prompt bounds.
 - The Python Poe client avoids logging raw upstream response bodies and records
