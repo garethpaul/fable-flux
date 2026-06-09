@@ -78,8 +78,8 @@ npm run dev
 
 The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
-validates prompt length, requires an HTTPS Modal endpoint, and avoids logging
-raw upstream story content.
+validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
+avoids logging raw upstream story content.
 
 ## Verification
 

@@ -131,6 +131,7 @@ if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_MODEL" "$route" ||
   ! grep -Fq "new URL" "$route" ||
   ! grep -Fq 'url.protocol === "https:"' "$route" ||
+  ! grep -Fq "url.hostname.length > 0" "$route" ||
   ! grep -Fq "trimmedPrompt.length === 0 || trimmedPrompt.length > 200" "$route" ||
   grep -Eq "Modal_API_KEY|POE_API_KEY" "$route" ||
   grep -Fq "GPT-5-Mini" "$route" ||

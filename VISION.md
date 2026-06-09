@@ -31,8 +31,8 @@ Current baseline:
   generated environments are not tracked.
 - Diversity selection accounts for unused characters and settings before
   reusing previously selected story elements.
-- The frontend proxy requires environment-backed Modal configuration and
-  server-side prompt bounds.
+- The frontend proxy requires environment-backed Modal configuration with an
+  HTTPS hostname and server-side prompt bounds.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
 

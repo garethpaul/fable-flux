@@ -17,8 +17,8 @@ story data and previously included generated Python environment artifacts.
 - Keep story validation and diversity behavior testable without Poe, Modal, or
   Hugging Face credentials.
 - Fix diversity balancing so unused characters and settings are not starved.
-- Require frontend Modal proxy configuration from environment variables and
-  reject unsafe or empty prompts.
+- Require frontend Modal proxy configuration from environment variables,
+  reject malformed endpoints, and reject unsafe or empty prompts.
 - Remove tracked virtualenv and Python bytecode artifacts.
 - Add a repeatable baseline command that checks Python source, config/data
   integrity, environment examples, frontend proxy guardrails, and docs.
@@ -36,8 +36,9 @@ story data and previously included generated Python environment artifacts.
 - `DiversityTracker` includes unseen characters and settings when selecting
   least-used values.
 - `tests/` covers diversity balancing and offline `StoryValidator` behavior.
-- The frontend API route requires `MODAL_API_KEY` and HTTPS `MODAL_API_URL`,
-  bounds prompt length, and avoids logging raw generated story content.
+- The frontend API route requires `MODAL_API_KEY` and a parseable HTTPS
+  `MODAL_API_URL` with a hostname, bounds prompt length, and avoids logging raw
+  generated story content.
 - `.gitignore` excludes local env files, virtualenvs, bytecode, frontend build
   outputs, and dependency directories.
 - `scripts/check-baseline.sh` and `Makefile` expose the static/offline gate.

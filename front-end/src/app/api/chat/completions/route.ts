@@ -10,7 +10,7 @@ function parseModalApiUrl(rawUrl: string | undefined): URL | null {
 
   try {
     const url = new URL(rawUrl.trim());
-    return url.protocol === "https:" ? url : null;
+    return url.protocol === "https:" && url.hostname.length > 0 ? url : null;
   } catch {
     return null;
   }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const modalApiUrl = parseModalApiUrl(process.env.MODAL_API_URL);
     if (!modalApiUrl) {
-      console.error("MODAL_API_URL must be set and use HTTPS");
+      console.error("MODAL_API_URL must be set to an HTTPS URL with a hostname");
       return NextResponse.json(
         { error: "Server configuration error" } as ApiError,
         { status: 500 }
