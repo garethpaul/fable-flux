@@ -91,6 +91,23 @@ The End."""
 
         self.assertFalse(self.validator().quick_validate(content))
 
+    def test_validate_story_rejects_non_string_sequence_metadata(self):
+        content = story_with_body(
+            "Milo and friends learn kindness together. " * 12
+        ).replace('tags: ["kindness", "friendship"]', 'tags: ["kindness", 7]')
+
+        is_valid, results = self.validator().validate_story(content)
+
+        self.assertFalse(is_valid)
+        self.assertIn("Tags must be a non-empty list of strings", results["errors"])
+
+    def test_quick_validate_rejects_non_string_sequence_metadata(self):
+        content = story_with_body(
+            "Milo and friends learn kindness together. " * 12
+        ).replace('characters: ["Milo"]', 'characters: ["Milo", 7]')
+
+        self.assertFalse(self.validator().quick_validate(content))
+
     def test_invalid_story_type_is_reported(self):
         content = story_with_body(
             "Milo and friends learn kindness together. " * 12

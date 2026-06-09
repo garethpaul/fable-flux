@@ -5,6 +5,7 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"
 QUICK_FRONTMATTER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md"
 UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequence-metadata-guard.md"
+VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -52,6 +53,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-uploader-sequence-metadata-guard.md" \
   "docs/plans/2026-06-09-fable-flux-uploader-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md" \
+  "docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md" \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
@@ -106,6 +108,8 @@ PY
 if ! grep -Fq "make check" "$ROOT_DIR/README.md" ||
   ! grep -Fq "POE_API_KEY" "$ROOT_DIR/README.md" ||
   ! grep -Fq "MODAL_API_URL" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "Validator and uploader metadata" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "string lists so quality checks" "$ROOT_DIR/README.md" ||
   ! grep -Fq "children's educational" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must document baseline verification, env keys, and responsible story generation scope." >&2
   exit 1
@@ -113,6 +117,8 @@ fi
 
 if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "unused characters and settings" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "Story validation requires" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "string lists before quick" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "frontend proxy" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION must describe the current baseline and guarded surfaces." >&2
   exit 1
@@ -144,10 +150,20 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
 fi
 
 if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "def _validate_string_list_field" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "non-empty list of strings" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "frontmatter_valid, _frontmatter_errors = self._validate_frontmatter(frontmatter)" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "self._parse_story_structure(content)" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "test_quick_validate_rejects_non_mapping_frontmatter" "$ROOT_DIR/tests/test_story_validator.py" ||
+  ! grep -Fq "test_validate_story_rejects_non_string_sequence_metadata" "$ROOT_DIR/tests/test_story_validator.py" ||
+  ! grep -Fq "test_quick_validate_rejects_non_string_sequence_metadata" "$ROOT_DIR/tests/test_story_validator.py" ||
   ! grep -Fq "test_non_mapping_frontmatter_is_invalid" "$ROOT_DIR/tests/test_story_validator.py"; then
-  printf '%s\n' "Story validator must reject non-mapping YAML frontmatter in full and quick validation." >&2
+  printf '%s\n' "Story validator must reject malformed YAML frontmatter and sequence metadata in full and quick validation." >&2
+  exit 1
+fi
+
+if ! grep -Fq "non-empty string lists" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document story metadata sequence boundaries." >&2
   exit 1
 fi
 
@@ -256,6 +272,16 @@ fi
 
 if ! grep -Fq "status: completed" "$UPLOADER_SEQUENCE_PLAN"; then
   printf '%s\n' "Uploader sequence metadata guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$VALIDATOR_SEQUENCE_PLAN"; then
+  printf '%s\n' "Validator sequence metadata guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$VALIDATOR_SEQUENCE_PLAN"; then
+  printf '%s\n' "Validator sequence metadata guard plan must record make check verification." >&2
   exit 1
 fi
 

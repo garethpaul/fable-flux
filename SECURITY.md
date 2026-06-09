@@ -30,7 +30,9 @@ Helpful reports include:
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
-- Dataset upload parsing should reject malformed story frontmatter and keep list-typed metadata as non-empty string lists before publishing JSONL records.
+- Story validation and dataset upload parsing should reject malformed story
+  frontmatter and keep list-typed metadata as non-empty string lists before
+  quality checks or JSONL publishing.
 - Review found shell execution, subprocess, or dynamic evaluation surfaces; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.

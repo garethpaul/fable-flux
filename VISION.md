@@ -33,6 +33,8 @@ Current baseline:
   reusing previously selected story elements.
 - Story validation rejects non-mapping YAML frontmatter in quick and full
   validation before content quality checks run.
+- Story validation requires `characters` and `tags` metadata to be non-empty
+  string lists before quick or full validation passes.
 - Dataset upload parsing rejects non-mapping YAML frontmatter before building
   Hugging Face records, and keeps `characters` and `tags` as non-empty string
   lists before JSONL export.

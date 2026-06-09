@@ -162,14 +162,21 @@ class StoryValidator:
                 errors.append(f"Invalid story type: {frontmatter['type']}. Must be one of {valid_types}")
                 
         if 'characters' in frontmatter:
-            if not isinstance(frontmatter['characters'], list) or len(frontmatter['characters']) == 0:
-                errors.append("Characters must be a non-empty list")
+            if not self._validate_string_list_field(frontmatter['characters']):
+                errors.append("Characters must be a non-empty list of strings")
                 
         if 'tags' in frontmatter:
-            if not isinstance(frontmatter['tags'], list) or len(frontmatter['tags']) == 0:
-                errors.append("Tags must be a non-empty list")
+            if not self._validate_string_list_field(frontmatter['tags']):
+                errors.append("Tags must be a non-empty list of strings")
                 
         return len(errors) == 0, errors
+
+    def _validate_string_list_field(self, values: Any) -> bool:
+        return (
+            isinstance(values, list)
+            and len(values) > 0
+            and all(isinstance(value, str) and value.strip() for value in values)
+        )
         
     def _analyze_content(self, content: str) -> Dict:
         """
@@ -362,7 +369,11 @@ class StoryValidator:
             # Reuse the full parser so quick checks enforce the same
             # mapping-shaped frontmatter boundary as complete validation.
             frontmatter, story_content = self._parse_story_structure(content)
-            return frontmatter is not None and story_content is not None
+            if frontmatter is None or story_content is None:
+                return False
+
+            frontmatter_valid, _frontmatter_errors = self._validate_frontmatter(frontmatter)
+            return frontmatter_valid
             
         except Exception:
             return False

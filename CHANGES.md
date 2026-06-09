@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Rejected non-string story validator `characters`/`tags` metadata in both
+  full and quick validation.
 - Rejected scalar or mixed-type uploader `characters`/`tags` metadata before
   Hugging Face dataset record creation, and exposed `make lint`/`make build`
   aliases for the offline baseline.

@@ -87,8 +87,9 @@ HTTP error logs; it records response length instead.
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
 checks run, and by the Hugging Face uploader before dataset records are built.
-Uploader metadata for `characters` and `tags` must be non-empty lists of
-strings so exported JSONL records keep their dataset sequence shape.
+Validator and uploader metadata for `characters` and `tags` must be non-empty
+string lists so quality checks and exported JSONL records keep their dataset
+sequence shape.
 
 ## Verification
 
