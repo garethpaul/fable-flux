@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-09
+
+- Stopped logging raw Poe response bodies on Python client parse and HTTP error
+  paths.
+- Added a response-length summary helper, unit coverage, and baseline guard for
+  the Poe logging boundary.
+
 ## 2026-06-08
 
 - Added an offline maintenance baseline with `make check` and `scripts/check-baseline.sh`.

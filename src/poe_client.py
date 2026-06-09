@@ -134,6 +134,11 @@ class PoeClient:
         selected_model = random.choice(self.available_models)
         logging.debug(f"Selected model: {selected_model} from {self.available_models}")
         return selected_model
+
+    @staticmethod
+    def _response_body_summary(response_text: str) -> str:
+        """Describe an upstream response without logging its raw content."""
+        return f"{len(response_text or '')} characters"
     
     async def validate_model_accessibility(self, model: str) -> bool:
         """
@@ -345,15 +350,18 @@ Always follow the exact YAML frontmatter format and story structure provided in 
                             
                     except json.JSONDecodeError as e:
                         logging.error(f"Failed to parse JSON response from {selected_model}: {e}")
-                        logging.error(f"Raw response: {response_text}")
+                        logging.error(
+                            "Poe response body omitted from logs; length: "
+                            f"{self._response_body_summary(response_text)}"
+                        )
                         return None
                         
                 elif response.status == 400:
-                    try:
-                        error_data = json.loads(response_text)
-                        logging.error(f"HTTP 400 Bad Request with model {selected_model}: {error_data}")
-                    except:
-                        logging.error(f"HTTP 400 Bad Request with model {selected_model}: {response_text}")
+                    logging.error(
+                        "HTTP 400 Bad Request with model %s; response body length: %s",
+                        selected_model,
+                        self._response_body_summary(response_text),
+                    )
                     raise aiohttp.ClientResponseError(
                         request_info=response.request_info,
                         history=response.history,
@@ -362,7 +370,12 @@ Always follow the exact YAML frontmatter format and story structure provided in 
                     )
                     
                 else:
-                    logging.error(f"HTTP {response.status} error with model {selected_model}: {response_text}")
+                    logging.error(
+                        "HTTP %s error with model %s; response body length: %s",
+                        response.status,
+                        selected_model,
+                        self._response_body_summary(response_text),
+                    )
                     response.raise_for_status()
                     
         except aiohttp.ClientResponseError:

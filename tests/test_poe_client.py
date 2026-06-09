@@ -24,6 +24,13 @@ class PoeClientTests(unittest.TestCase):
         self.assertIn('tags: ["kindness", "friendship"]', prompt)
         self.assertIn("The End.", prompt)
 
+    def test_response_body_summary_omits_raw_response_content(self):
+        summary = PoeClient._response_body_summary("private generated story")
+
+        self.assertEqual("23 characters", summary)
+        self.assertNotIn("private", summary)
+        self.assertNotIn("story", summary)
+
 
 if __name__ == "__main__":
     unittest.main()

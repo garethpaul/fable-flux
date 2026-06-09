@@ -81,6 +81,9 @@ The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
 avoids logging raw upstream story content.
 
+The Python Poe client also omits raw upstream response bodies from parse and
+HTTP error logs; it records response length instead.
+
 ## Verification
 
 Run the offline baseline:

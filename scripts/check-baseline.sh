@@ -46,6 +46,7 @@ for path in \
   "tests/test_diversity_tracker.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
+  "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
@@ -125,6 +126,16 @@ if ! grep -Fq "usage_counts = {char: self.character_usage.get(char, 0)" "$ROOT_D
   exit 1
 fi
 
+if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "Poe response body omitted from logs" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "response body length" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
+  grep -Fq "Raw response:" "$ROOT_DIR/src/poe_client.py" ||
+  grep -Eq "logging\\.(error|warning|info|debug).*response_text" "$ROOT_DIR/src/poe_client.py"; then
+  printf '%s\n' "Poe client must avoid logging raw upstream response bodies." >&2
+  exit 1
+fi
+
 route="$ROOT_DIR/front-end/src/app/api/chat/completions/route.ts"
 if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_API_URL" "$route" ||
@@ -184,6 +195,11 @@ fi
 
 if ! grep -Fq "status: completed" "$PLAN"; then
   printf '%s\n' "Plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md"; then
+  printf '%s\n' "Poe response logging boundary plan must be marked completed." >&2
   exit 1
 fi
 

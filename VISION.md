@@ -33,6 +33,8 @@ Current baseline:
   reusing previously selected story elements.
 - The frontend proxy requires environment-backed Modal configuration with an
   HTTPS hostname and server-side prompt bounds.
+- The Python Poe client avoids logging raw upstream response bodies and records
+  response length for failed parse/HTTP paths.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
 
