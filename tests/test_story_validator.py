@@ -60,6 +60,23 @@ class StoryValidatorTests(unittest.TestCase):
         self.assertFalse(is_valid)
         self.assertIn("Invalid story structure", results["errors"][0])
 
+    def test_non_mapping_frontmatter_is_invalid(self):
+        content = """---
+- not
+- key value metadata
+---
+
+# Milo Shares The Garden
+
+Milo and friends learn kindness together. Milo smiles and helps a friend.
+
+The End."""
+
+        is_valid, results = self.validator().validate_story(content)
+
+        self.assertFalse(is_valid)
+        self.assertIn("Invalid story structure", results["errors"][0])
+
     def test_invalid_story_type_is_reported(self):
         content = story_with_body(
             "Milo and friends learn kindness together. " * 12

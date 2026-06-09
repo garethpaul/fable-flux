@@ -46,6 +46,7 @@ for path in \
   "tests/test_diversity_tracker.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
+  "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -136,6 +137,12 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   exit 1
 fi
 
+if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py" ||
+  ! grep -Fq "test_non_mapping_frontmatter_is_invalid" "$ROOT_DIR/tests/test_story_validator.py"; then
+  printf '%s\n' "Story validator must reject non-mapping YAML frontmatter at parse time." >&2
+  exit 1
+fi
+
 route="$ROOT_DIR/front-end/src/app/api/chat/completions/route.ts"
 if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_API_URL" "$route" ||
@@ -200,6 +207,11 @@ fi
 
 if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md"; then
   printf '%s\n' "Poe response logging boundary plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md"; then
+  printf '%s\n' "Frontmatter mapping guard plan must be marked completed." >&2
   exit 1
 fi
 

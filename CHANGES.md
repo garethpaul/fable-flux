@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Rejected non-mapping YAML story frontmatter at parse time and added unit and
+  baseline coverage for malformed metadata.
 - Stopped logging raw Poe response bodies on Python client parse and HTTP error
   paths.
 - Added a response-length summary helper, unit coverage, and baseline guard for

@@ -84,6 +84,9 @@ avoids logging raw upstream story content.
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead.
 
+Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
+empty frontmatter is rejected before quality checks run.
+
 ## Verification
 
 Run the offline baseline:
@@ -94,7 +97,8 @@ make check
 
 The baseline compiles Python entry points, runs synthetic validator tests plus
 offline diversity and prompt tests, performs static frontend proxy checks, and
-runs frontend lint when `front-end/node_modules` is present.
+runs frontend lint when `front-end/node_modules` is present. It also guards
+frontmatter parsing so malformed metadata does not reach story quality checks.
 
 Run frontend checks after touching the app:
 

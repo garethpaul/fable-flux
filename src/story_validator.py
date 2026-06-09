@@ -135,6 +135,9 @@ class StoryValidator:
             
         try:
             frontmatter = yaml.safe_load(parts[1])
+            if not isinstance(frontmatter, dict):
+                return None, None
+
             story_content = parts[2].strip()
             return frontmatter, story_content
         except yaml.YAMLError as e:
