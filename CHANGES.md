@@ -10,6 +10,8 @@
   paths.
 - Added a response-length summary helper, unit coverage, and baseline guard for
   the Poe logging boundary.
+- Rejected non-mapping story frontmatter in the Hugging Face uploader before
+  dataset record creation.
 
 ## 2026-06-08
 

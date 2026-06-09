@@ -86,7 +86,7 @@ HTTP error logs; it records response length instead.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
-checks run.
+checks run, and by the Hugging Face uploader before dataset records are built.
 
 ## Verification
 
@@ -100,7 +100,7 @@ The baseline compiles Python entry points, runs synthetic validator tests plus
 offline diversity and prompt tests, performs static frontend proxy checks, and
 runs frontend lint when `front-end/node_modules` is present. It also guards
 frontmatter parsing and quick validation so malformed metadata does not reach
-story quality checks.
+story quality checks or dataset export records.
 
 Run frontend checks after touching the app:
 

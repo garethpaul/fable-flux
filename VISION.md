@@ -33,6 +33,8 @@ Current baseline:
   reusing previously selected story elements.
 - Story validation rejects non-mapping YAML frontmatter in quick and full
   validation before content quality checks run.
+- Dataset upload parsing rejects non-mapping YAML frontmatter before building
+  Hugging Face records.
 - The frontend proxy requires environment-backed Modal configuration with an
   HTTPS hostname and server-side prompt bounds.
 - The Python Poe client avoids logging raw upstream response bodies and records

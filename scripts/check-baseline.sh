@@ -45,8 +45,10 @@ for path in \
   "src/poe_client.py" \
   "src/story_validator.py" \
   "tests/test_diversity_tracker.py" \
+  "tests/test_huggingface_uploader.py" \
   "tests/test_poe_client.py" \
   "tests/test_story_validator.py" \
+  "docs/plans/2026-06-09-fable-flux-uploader-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-quick-frontmatter-guard.md" \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
@@ -147,6 +149,12 @@ if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py"
   exit 1
 fi
 
+if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
+  ! grep -Fq "test_parse_story_file_rejects_non_mapping_frontmatter" "$ROOT_DIR/tests/test_huggingface_uploader.py"; then
+  printf '%s\n' "Hugging Face uploader must reject non-mapping YAML frontmatter before dataset record creation." >&2
+  exit 1
+fi
+
 route="$ROOT_DIR/front-end/src/app/api/chat/completions/route.ts"
 if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_API_URL" "$route" ||
@@ -221,6 +229,11 @@ fi
 
 if ! grep -Fq "status: completed" "$QUICK_FRONTMATTER_PLAN"; then
   printf '%s\n' "Quick frontmatter guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-frontmatter-guard.md"; then
+  printf '%s\n' "Uploader frontmatter guard plan must be marked completed." >&2
   exit 1
 fi
 

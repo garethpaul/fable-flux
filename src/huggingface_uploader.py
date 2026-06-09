@@ -50,6 +50,10 @@ class StoryParser:
             except yaml.YAMLError as e:
                 logging.error(f"Error parsing frontmatter in {file_path}: {e}")
                 return None
+
+            if not isinstance(metadata, dict):
+                logging.warning(f"Frontmatter metadata in {file_path} must be a mapping")
+                return None
             
             # Clean and extract story text
             story_text = self._extract_story_text(story_content.strip())
