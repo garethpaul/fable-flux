@@ -71,7 +71,7 @@ artifacts under `output/huggingface/`.
 
 ```bash
 cd front-end
-npm install
+npm ci
 cp .env.local.example .env.local
 npm run dev
 ```
@@ -110,6 +110,10 @@ offline diversity, prompt, and Poe rate-limit tests, performs static frontend
 proxy checks, and runs frontend lint when `front-end/node_modules` is present.
 It also guards frontmatter parsing and quick validation so malformed metadata
 does not reach story quality checks or dataset export records.
+GitHub Actions runs the offline Python baseline with pinned minimal dependencies
+on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
+clean frontend installs, linting, production builds, and moderate-severity npm
+audits. Actions are pinned by commit and repository access is read-only.
 
 Run frontend checks after touching the app:
 
@@ -117,6 +121,7 @@ Run frontend checks after touching the app:
 cd front-end
 npm run lint
 npm run build
+npm run audit
 ```
 
 ## Security And Privacy
@@ -132,3 +137,4 @@ npm run build
   checked-in configuration.
 
 See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.
+See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.

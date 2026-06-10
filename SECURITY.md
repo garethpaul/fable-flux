@@ -37,6 +37,9 @@ Helpful reports include:
   summarized by length instead.
 - Poe client rate limits should reject zero or negative configuration values
   and require a post-sleep token check before sending another upstream request.
+- GitHub Actions runs pinned Python and Node matrices for the offline baseline,
+  frontend lint/build, and moderate npm audit. Keep hosted paths free of live
+  Poe, Hugging Face, Modal, or generated-story uploads.
 - Review found shell execution, subprocess, or dynamic evaluation surfaces; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.

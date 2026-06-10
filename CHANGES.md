@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-10
+
+- Added pinned Python 3.10/3.12/3.14 and Node 20/22/24 GitHub Actions matrices
+  for offline tests, frontend linting, production builds, and npm audit.
+- Pinned minimal CI dependencies, refreshed compatible frontend packages, and
+  updated React and React DOM to 19.2.7.
+
 ## 2026-06-09
 
 - Hardened the Poe client rate limiter to reject invalid limits and recheck

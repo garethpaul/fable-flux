@@ -8,6 +8,7 @@ UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequ
 VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
 POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
+CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -29,9 +30,11 @@ require_file() {
 for path in \
   ".env.example" \
   ".gitignore" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
+  "requirements-ci.txt" \
   "SECURITY.md" \
   "VISION.md" \
   "config/generation_config.yaml" \
@@ -39,6 +42,7 @@ for path in \
   "data/settings.json" \
   "data/tags.json" \
   "front-end/.env.local.example" \
+  "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
   "generate_stories.py" \
@@ -60,6 +64,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
@@ -115,6 +120,7 @@ if ! grep -Fq "make check" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Validator and uploader metadata" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Poe rate-limit tests" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/README.md" ||
   ! grep -Fq "rechecks token state after sleeping" "$ROOT_DIR/README.md" ||
   ! grep -Fq "string lists so quality checks" "$ROOT_DIR/README.md" ||
   ! grep -Fq "children's educational" "$ROOT_DIR/README.md"; then
@@ -126,6 +132,7 @@ if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "unused characters and settings" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Story validation requires" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "rate limiter validates positive limits" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "string lists before quick" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "frontend proxy" "$ROOT_DIR/VISION.md"; then
@@ -192,6 +199,44 @@ fi
 
 if ! grep -Fq "post-sleep token check" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document Poe rate limiter boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document the hosted baseline." >&2
+  exit 1
+fi
+
+workflow="$ROOT_DIR/.github/workflows/check.yml"
+if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$workflow" ||
+  ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$workflow" ||
+  ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$workflow" ||
+  ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
+  ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
+  ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
+  ! grep -Fq "run: make check" "$workflow" ||
+  ! grep -Fq "run: npm ci" "$workflow" ||
+  ! grep -Fq "run: npm run lint" "$workflow" ||
+  ! grep -Fq "run: npm run build" "$workflow" ||
+  ! grep -Fq "run: npm run audit" "$workflow" ||
+  ! grep -Fq "permissions:" "$workflow" ||
+  ! grep -Fq "contents: read" "$workflow" ||
+  ! grep -Fq "workflow_dispatch:" "$workflow" ||
+  ! grep -Fq "cancel-in-progress: true" "$workflow"; then
+  printf '%s\n' "GitHub Actions workflow must run pinned Python and frontend matrices." >&2
+  exit 1
+fi
+
+if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
+  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
+  exit 1
+fi
+
+if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
+  ! grep -Fq '"react-dom": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
+  ! grep -Fq '"audit": "npm audit --audit-level=moderate"' "$ROOT_DIR/front-end/package.json"; then
+  printf '%s\n' "Frontend React and audit contracts must remain pinned." >&2
   exit 1
 fi
 
@@ -320,6 +365,12 @@ fi
 
 if ! grep -Fq "make check" "$POE_VALIDATION_LOG_PLAN"; then
   printf '%s\n' "Poe validation logging boundary plan must record make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CI_PLAN" ||
+  ! grep -Fq "make check" "$CI_PLAN"; then
+  printf '%s\n' "CI baseline plan must record completed make check verification." >&2
   exit 1
 fi
 

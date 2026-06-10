@@ -50,12 +50,15 @@ Current baseline:
   state after sleeps before permitting the next upstream request.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
+- GitHub Actions runs the offline Python baseline and clean frontend
+  lint/build/audit checks across active Python and Node releases.
 
 Next priorities:
 
 - Add API route tests and broaden retry/error-path coverage
 - Document dataset publishing and model-serving ownership boundaries
 - Keep frontend API proxy behavior secure and user-friendly
+- Keep the hosted GitHub Actions baseline aligned with local offline checks
 - Add evaluation notes for story safety, age appropriateness, and educational fit
 
 Contribution rules:
