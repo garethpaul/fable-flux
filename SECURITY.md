@@ -37,6 +37,8 @@ Helpful reports include:
   summarized by length instead.
 - Poe client rate limits should reject zero or negative configuration values
   and require a post-sleep token check before sending another upstream request.
+- Poe client failures should use one backoff delay per actual retry and should
+  not sleep after the configured retry budget has been exhausted.
 - GitHub Actions runs pinned Python and Node matrices for the offline baseline,
   frontend lint/build, and moderate npm audit. Keep hosted paths free of live
   Poe, Hugging Face, Modal, or generated-story uploads.

@@ -271,6 +271,7 @@ class PoeClient:
             await self.rate_limiter.acquire()  # Rate limiting
             
             for attempt in range(max_retries + 1):
+                retry_delay = 2 ** attempt
                 try:
                     story_content = await self._make_request(prompt)
                     if story_content:
@@ -279,10 +280,8 @@ class PoeClient:
                         
                 except aiohttp.ClientResponseError as e:
                     if e.status == 429:  # Rate limited
-                        wait_time = min(60 * (2 ** attempt), 300)  # Exponential backoff, max 5 min
-                        logging.warning(f"Rate limited, waiting {wait_time}s before retry {attempt + 1}")
-                        await asyncio.sleep(wait_time)
-                        continue
+                        retry_delay = min(60 * (2 ** attempt), 300)
+                        logging.warning(f"Rate limited on attempt {attempt + 1}")
                     elif e.status == 401:  # Authentication error
                         logging.error(f"Authentication failed: {e}")
                         return None
@@ -290,17 +289,15 @@ class PoeClient:
                         logging.error(f"HTTP error {e.status}: {e}")
                         
                 except asyncio.TimeoutError:
-                    wait_time = 5 * (attempt + 1)
-                    logging.warning(f"Request timeout, waiting {wait_time}s before retry {attempt + 1}")
-                    await asyncio.sleep(wait_time)
+                    retry_delay = 5 * (attempt + 1)
+                    logging.warning(f"Request timeout on attempt {attempt + 1}")
                     
                 except Exception as e:
                     logging.error(f"Unexpected error on attempt {attempt + 1}: {e}")
                     
                 if attempt < max_retries:
-                    wait_time = 2 ** attempt  # Exponential backoff
-                    logging.info(f"Retrying in {wait_time}s (attempt {attempt + 2}/{max_retries + 1})")
-                    await asyncio.sleep(wait_time)
+                    logging.info(f"Retrying in {retry_delay}s (attempt {attempt + 2}/{max_retries + 1})")
+                    await asyncio.sleep(retry_delay)
                     
         logging.error(f"Failed to generate story after {max_retries + 1} attempts")
         return None

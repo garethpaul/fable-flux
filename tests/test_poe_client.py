@@ -1,5 +1,8 @@
 import unittest
 import asyncio
+from unittest.mock import AsyncMock, call, patch
+
+import aiohttp
 
 from src.poe_client import PoeClient, RateLimiter
 
@@ -87,6 +90,31 @@ class PoeClientTests(unittest.TestCase):
         self.assertIn("Poe validation response body omitted from logs", logs)
         self.assertIn("41 characters", logs)
         self.assertNotIn("private details", logs)
+
+    def test_timeout_retry_sleeps_once_and_exhausted_attempt_returns_immediately(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        client.session = object()
+        client._make_request = AsyncMock(side_effect=[asyncio.TimeoutError(), None])
+
+        with patch("src.poe_client.asyncio.sleep", new_callable=AsyncMock) as sleep:
+            result = asyncio.run(client.generate_story("prompt", max_retries=1))
+
+        self.assertIsNone(result)
+        self.assertEqual(2, client._make_request.await_count)
+        self.assertEqual([call(5)], sleep.await_args_list)
+
+    def test_rate_limit_retry_uses_provider_backoff_once(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        client.session = object()
+        rate_limit_error = aiohttp.ClientResponseError(None, (), status=429)
+        client._make_request = AsyncMock(side_effect=[rate_limit_error, "story"])
+
+        with patch("src.poe_client.asyncio.sleep", new_callable=AsyncMock) as sleep:
+            result = asyncio.run(client.generate_story("prompt", max_retries=1))
+
+        self.assertEqual("story", result)
+        self.assertEqual(2, client._make_request.await_count)
+        self.assertEqual([call(60)], sleep.await_args_list)
 
 
 if __name__ == "__main__":

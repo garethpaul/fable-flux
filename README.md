@@ -85,7 +85,9 @@ The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
 response bodies are also omitted from logs. Its local rate limiter rejects
 invalid zero or negative limits and rechecks token state after sleeping before
-allowing another upstream request.
+allowing another upstream request. Retry handling applies one failure-specific
+delay per actual retry and returns immediately once the retry budget is
+exhausted.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality

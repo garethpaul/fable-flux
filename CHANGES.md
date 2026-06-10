@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Corrected Poe retry backoff so timeout and rate-limit failures sleep once per
+  actual retry and exhausted attempts return without an unnecessary delay.
 - Added pinned Python 3.10/3.12/3.14 and Node 20/22/24 GitHub Actions matrices
   for offline tests, frontend linting, production builds, and npm audit.
 - Pinned minimal CI dependencies, refreshed compatible frontend packages, and

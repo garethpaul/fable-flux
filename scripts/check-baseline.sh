@@ -8,6 +8,7 @@ UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequ
 VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
 POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
+POE_RETRY_PLAN="$ROOT_DIR/docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 PYTHON=${PYTHON:-python3}
 
@@ -64,6 +65,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
+  "docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -167,6 +169,10 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "test_rate_limiter_rechecks_token_after_waiting" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_logs_response_summary_without_raw_body" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "if attempt < max_retries" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "await asyncio.sleep(retry_delay)" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "test_timeout_retry_sleeps_once_and_exhausted_attempt_returns_immediately" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "test_rate_limit_retry_uses_provider_backoff_once" "$ROOT_DIR/tests/test_poe_client.py" ||
   grep -Fq "error_data" "$ROOT_DIR/src/poe_client.py" ||
   grep -Fq "Raw response:" "$ROOT_DIR/src/poe_client.py" ||
   grep -Eq "logging\\.(error|warning|info|debug).*response_text" "$ROOT_DIR/src/poe_client.py"; then
@@ -199,6 +205,16 @@ fi
 
 if ! grep -Fq "post-sleep token check" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document Poe rate limiter boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "one backoff delay per actual retry" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document Poe retry backoff boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$POE_RETRY_PLAN"; then
+  printf '%s\n' "Poe retry plan must remain completed: $POE_RETRY_PLAN" >&2
   exit 1
 fi
 
