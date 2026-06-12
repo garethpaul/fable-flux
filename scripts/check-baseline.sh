@@ -9,6 +9,7 @@ VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-se
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
 POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
 POE_RETRY_PLAN="$ROOT_DIR/docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md"
+POE_STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-poe-model-validation-status.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 PYTHON=${PYTHON:-python3}
 
@@ -66,6 +67,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
   "docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md" \
+  "docs/plans/2026-06-12-poe-model-validation-status.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -169,6 +171,10 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "test_rate_limiter_rechecks_token_after_waiting" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_logs_response_summary_without_raw_body" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "test_model_validation_accepts_only_http_200" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "(429, False)" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "Model {model} validation returned status {response.status}" "$ROOT_DIR/src/poe_client.py" ||
+  grep -Fq "return response.status < 500" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "if attempt < max_retries" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "await asyncio.sleep(retry_delay)" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "test_timeout_retry_sleeps_once_and_exhausted_attempt_returns_immediately" "$ROOT_DIR/tests/test_poe_client.py" ||
@@ -200,6 +206,11 @@ fi
 
 if ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document Poe model validation logging boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "fail closed for every response except HTTP 200" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document fail-closed Poe model accessibility validation." >&2
   exit 1
 fi
 

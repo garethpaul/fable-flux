@@ -91,6 +91,23 @@ class PoeClientTests(unittest.TestCase):
         self.assertIn("41 characters", logs)
         self.assertNotIn("private details", logs)
 
+    def test_model_validation_accepts_only_http_200(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+
+        for status, expected in (
+            (200, True),
+            (201, False),
+            (302, False),
+            (401, False),
+            (403, False),
+            (429, False),
+            (500, False),
+        ):
+            with self.subTest(status=status):
+                response = FakePoeResponse(status, "private upstream details")
+                result = asyncio.run(client._process_validation_response(response, "test-model"))
+                self.assertIs(expected, result)
+
     def test_timeout_retry_sleeps_once_and_exhausted_attempt_returns_immediately(self):
         client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
         client.session = object()
