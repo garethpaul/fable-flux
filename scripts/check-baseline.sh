@@ -231,6 +231,14 @@ if ! grep -Fq "status: completed" "$POE_RETRY_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$POE_STATUS_PLAN" ||
+  ! grep -Fq "23 tests" "$POE_STATUS_PLAN" ||
+  ! grep -Fq "27391848731" "$POE_STATUS_PLAN" ||
+  ! grep -Fq "27391849643" "$POE_STATUS_PLAN"; then
+  printf '%s\n' "Poe validation status plan must remain completed with hosted matrix verification recorded." >&2
+  exit 1
+fi
+
 if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document the hosted baseline." >&2
   exit 1

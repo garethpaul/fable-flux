@@ -1,6 +1,6 @@
 # Poe Model Validation Status Contract
 
-## Status: In Progress
+## Status: Completed
 
 ## Goal
 
@@ -44,3 +44,24 @@ models merely because their unhandled HTTP status is below 500.
 - `git diff --check`.
 - Mutation check: restoring `return response.status < 500` must fail the static
   baseline and focused model-validation test.
+
+## Work Completed
+
+- Changed Poe model preflight so only HTTP 200 returns accessible.
+- Kept explicit redacted handling for HTTP 400 and 404 while making all other
+  statuses fail closed without reading or logging response bodies.
+- Added one table-driven test covering HTTP 200, unexpected 201, redirect 302,
+  model error 400, authentication 401, authorization 403, missing model 404,
+  rate limit 429, and server failure 500.
+- Updated project, security, roadmap, and changelog documentation and extended
+  the static baseline to reject range-based accessibility decisions.
+
+## Verification Completed
+
+- `make check` passes locally with 23 tests.
+- `git diff --check` passes.
+- A context-specific mutation restoring `return response.status < 500` fails
+  five focused status cases and the static baseline.
+- GitHub Actions push run `27391848731` passed on Python 3.10, 3.12, and 3.14
+  and Node 20, 22, and 24.
+- GitHub Actions pull-request run `27391849643` passed the same six-job matrix.
