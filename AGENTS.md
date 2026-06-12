@@ -42,6 +42,13 @@ Fable Flux is an AI-assisted educational story pipeline. The repository contains
 ## Safety and gotchas
 
 - Notebook outputs can be large or noisy; clear unnecessary execution output before committing notebooks.
+- Keep `POE_API_KEY`, `HF_TOKEN`, `MODAL_API_KEY`, and service-specific values in local environment files only. Checked-in examples must remain placeholders.
+- Keep hosted checks offline. Tests and CI must not call Poe, Hugging Face, Modal, publish datasets, or generate billable stories.
+- Do not log prompts, generated stories, user input, or raw upstream response bodies. Preserve the existing length-only Poe response summaries.
+- Story and uploader frontmatter must remain mappings, and `characters` and `tags` must remain non-empty lists of non-empty strings before validation or publishing.
+- Poe rate limits must stay positive and recheck token state after sleeping. Retries must sleep once per actual retry and return immediately after the retry budget is exhausted.
+- The frontend proxy must use server-side environment configuration, require an HTTPS Modal endpoint with a hostname, bound prompt length, and avoid raw generated-content logs.
+- Treat `data/stories`, `output`, and `logs` as potentially sensitive generated content. Do not commit new generated stories or runtime logs during maintenance work.
 
 ## Agent workflow
 

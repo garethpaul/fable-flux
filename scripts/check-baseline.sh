@@ -248,14 +248,22 @@ fi
 if ! awk '
   function finish_step() {
     if (checkout) {
-      checkout_count++
+      checkout_count[current_job]++
       if (persist_credentials) {
-        secure_checkout_count++
+        secure_checkout_count[current_job]++
       }
     }
     checkout = 0
     with_block = 0
     persist_credentials = 0
+  }
+
+  /^  (python|frontend):$/ {
+    finish_step()
+    current_job = $1
+    sub(/:$/, "", current_job)
+    jobs_seen[current_job] = 1
+    next
   }
 
   /^      - / {
@@ -280,7 +288,9 @@ if ! awk '
 
   END {
     finish_step()
-    exit !(checkout_count == 2 && secure_checkout_count == 2)
+    python_secure = jobs_seen["python"] && checkout_count["python"] == 1 && secure_checkout_count["python"] == 1
+    frontend_secure = jobs_seen["frontend"] && checkout_count["frontend"] == 1 && secure_checkout_count["frontend"] == 1
+    exit !(python_secure && frontend_secure)
   }
 ' "$workflow"; then
   printf '%s\n' "Every pinned checkout step must disable persisted credentials." >&2
@@ -311,11 +321,13 @@ if ! awk '
     exit !(permissions_count == 1 && contents_read == 1 && unexpected_permission == 0)
   }
 ' "$workflow" ||
+  grep -Eq '^[[:space:]]+permissions:' "$workflow" ||
   grep -Eq '^[[:space:]]*permissions:[[:space:]]*write-all([[:space:]]*(#.*)?)?$' "$workflow" ||
   grep -Eq '^[[:space:]]+[[:alnum:]_-]+:[[:space:]]*write([[:space:]]*(#.*)?)?$' "$workflow"; then
   printf '%s\n' "GitHub Actions must grant only top-level read access to repository contents." >&2
   exit 1
 fi
+
 
 if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must document the credential-free checkout boundary." >&2
