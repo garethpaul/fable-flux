@@ -64,6 +64,7 @@ Next priorities:
 - Document dataset publishing and model-serving ownership boundaries
 - Keep frontend API proxy behavior secure and user-friendly
 - Keep the hosted GitHub Actions baseline aligned with local offline checks
+- Keep the pinned Ubuntu runner deliberate across both language matrices
 - Add evaluation notes for story safety, age appropriateness, and educational fit
 
 Contribution rules:

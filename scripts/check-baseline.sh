@@ -11,6 +11,7 @@ POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limit
 POE_RETRY_PLAN="$ROOT_DIR/docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md"
 POE_STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-poe-model-validation-status.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
+RUNNER_PIN_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-runner-pin.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -68,6 +69,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
   "docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md" \
   "docs/plans/2026-06-12-poe-model-validation-status.md" \
+  "docs/plans/2026-06-12-hosted-runner-pin.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -81,7 +83,7 @@ done
   "$ROOT_DIR"/src/*.py \
   "$ROOT_DIR"/tests/*.py
 
-"$PYTHON" -m unittest discover -s "$ROOT_DIR/tests" -p "test*.py"
+(cd "$ROOT_DIR" && "$PYTHON" -m unittest discover -s tests -p "test*.py")
 
 "$PYTHON" - "$ROOT_DIR" <<'PY'
 import json
@@ -315,8 +317,16 @@ if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
 fi
 
 workflow="$ROOT_DIR/.github/workflows/check.yml"
+workflow_files=$(find "$ROOT_DIR/.github/workflows" -mindepth 1 -maxdepth 1 -type f -print | sort)
+if [ "$workflow_files" != "$workflow" ]; then
+  printf '%s\n' "GitHub Actions workflow inventory must contain only check.yml." >&2
+  exit 1
+fi
+
 if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$workflow" ||
   ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$workflow" ||
+  [ "$(grep -Fc "runs-on: ubuntu-24.04" "$workflow")" -ne 2 ] ||
+  grep -Fq "ubuntu-latest" "$workflow" ||
   ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
   ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
@@ -328,6 +338,22 @@ if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$
   ! grep -Fq "workflow_dispatch:" "$workflow" ||
   ! grep -Fq "cancel-in-progress: true" "$workflow"; then
   printf '%s\n' "GitHub Actions workflow must run pinned Python and frontend matrices." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$RUNNER_PIN_PLAN" ||
+  ! grep -Fq "exactly two explicit runner declarations" "$RUNNER_PIN_PLAN" ||
+  ! grep -Fq "Local and external-working-directory gates passed" "$RUNNER_PIN_PLAN" ||
+  ! grep -Fq "hostile mutations rejected" "$RUNNER_PIN_PLAN"; then
+  printf '%s\n' "Hosted runner plan must record completed status and verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Ubuntu 24.04" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "explicit Ubuntu 24.04" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "pinned Ubuntu runner" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "Pinned both hosted jobs to Ubuntu 24.04" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Repository guidance must document the hosted runner boundary." >&2
   exit 1
 fi
 
