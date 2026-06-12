@@ -117,7 +117,8 @@ does not reach story quality checks or dataset export records.
 GitHub Actions runs the offline Python baseline with pinned minimal dependencies
 on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
 clean frontend installs, linting, production builds, and moderate-severity npm
-audits. Actions are pinned by commit and repository access is read-only.
+audits. Actions are pinned by commit, repository access is read-only, and
+checkout credentials are not persisted in either job.
 
 Run frontend checks after touching the app:
 

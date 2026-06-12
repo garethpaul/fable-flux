@@ -188,6 +188,52 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   exit 1
 fi
 
+"$PYTHON" - "$ROOT_DIR/tests/test_poe_client.py" <<'PY'
+import ast
+import sys
+from pathlib import Path
+
+test_path = Path(sys.argv[1])
+tree = ast.parse(test_path.read_text(), filename=str(test_path))
+expected = {
+    200: True,
+    201: False,
+    302: False,
+    400: False,
+    401: False,
+    403: False,
+    404: False,
+    429: False,
+    500: False,
+}
+matrix = None
+
+for node in ast.walk(tree):
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        continue
+    if node.name != "test_model_validation_accepts_only_http_200":
+        continue
+    for child in ast.walk(node):
+        if not isinstance(child, ast.For):
+            continue
+        if not isinstance(child.target, (ast.Tuple, ast.List)):
+            continue
+        names = [item.id for item in child.target.elts if isinstance(item, ast.Name)]
+        if names != ["status", "expected"]:
+            continue
+        try:
+            matrix = dict(ast.literal_eval(child.iter))
+        except (TypeError, ValueError, SyntaxError):
+            pass
+
+if matrix is None or any(matrix.get(status) is not result for status, result in expected.items()):
+    print(
+        "Poe validation test must retain the complete explicit HTTP status matrix.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
+
 if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "def _validate_string_list_field" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "non-empty list of strings" "$ROOT_DIR/src/story_validator.py" ||
@@ -231,13 +277,37 @@ if ! grep -Fq "status: completed" "$POE_RETRY_PLAN"; then
   exit 1
 fi
 
-if ! grep -Fq "Status: Completed" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "23 tests" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "27391848731" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "27391849643" "$POE_STATUS_PLAN"; then
-  printf '%s\n' "Poe validation status plan must remain completed with hosted matrix verification recorded." >&2
-  exit 1
-fi
+"$PYTHON" - "$POE_STATUS_PLAN" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+plan_path = Path(sys.argv[1])
+text = plan_path.read_text()
+status_headings = re.findall(r"^## Status: .+$", text, flags=re.MULTILINE)
+
+try:
+    verification = text.split("## Verification Completed\n", 1)[1]
+except IndexError:
+    verification = ""
+
+required_evidence = (
+    "- `make check` passes locally with 23 tests.",
+    "- GitHub Actions push run `27391848731` passed",
+    "- GitHub Actions pull-request run `27391849643` passed",
+)
+
+if (
+    status_headings != ["## Status: Completed"]
+    or any(evidence not in verification for evidence in required_evidence)
+    or re.search(r"\b(?:pending|todo|tbd|not run)\b", verification, flags=re.IGNORECASE)
+):
+    print(
+        "Poe validation status plan must remain completed with actual hosted matrix verification recorded.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
 
 if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document the hosted baseline." >&2
@@ -245,8 +315,7 @@ if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
 fi
 
 workflow="$ROOT_DIR/.github/workflows/check.yml"
-if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$workflow" ||
-  ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$workflow" ||
+if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$workflow" ||
   ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$workflow" ||
   ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
@@ -256,11 +325,103 @@ if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$work
   ! grep -Fq "run: npm run lint" "$workflow" ||
   ! grep -Fq "run: npm run build" "$workflow" ||
   ! grep -Fq "run: npm run audit" "$workflow" ||
-  ! grep -Fq "permissions:" "$workflow" ||
-  ! grep -Fq "contents: read" "$workflow" ||
   ! grep -Fq "workflow_dispatch:" "$workflow" ||
   ! grep -Fq "cancel-in-progress: true" "$workflow"; then
   printf '%s\n' "GitHub Actions workflow must run pinned Python and frontend matrices." >&2
+  exit 1
+fi
+
+if [ "$(grep -Ec '^[[:space:]]+(-[[:space:]]+)?uses: actions/checkout@' "$workflow")" -ne 2 ]; then
+  printf '%s\n' "GitHub Actions must contain exactly one checkout step per job." >&2
+  exit 1
+fi
+
+if ! awk '
+  function finish_step() {
+    if (checkout) {
+      checkout_count[current_job]++
+      if (persist_credentials) {
+        secure_checkout_count[current_job]++
+      }
+    }
+    checkout = 0
+    with_block = 0
+    persist_credentials = 0
+  }
+
+  /^  (python|frontend):$/ {
+    finish_step()
+    current_job = $1
+    sub(/:$/, "", current_job)
+    jobs_seen[current_job] = 1
+    next
+  }
+
+  /^      - / {
+    finish_step()
+  }
+
+  /^        uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  /^      - uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  checkout && /^        with:$/ {
+    with_block = 1
+  }
+
+  checkout && with_block && /^          persist-credentials: false$/ {
+    persist_credentials = 1
+  }
+
+  END {
+    finish_step()
+    python_secure = jobs_seen["python"] && checkout_count["python"] == 1 && secure_checkout_count["python"] == 1
+    frontend_secure = jobs_seen["frontend"] && checkout_count["frontend"] == 1 && secure_checkout_count["frontend"] == 1
+    exit !(python_secure && frontend_secure)
+  }
+' "$workflow"; then
+  printf '%s\n' "Every pinned checkout step must disable persisted credentials." >&2
+  exit 1
+fi
+
+if ! awk '
+  /^permissions:$/ {
+    permissions_count++
+    in_permissions = 1
+    next
+  }
+
+  in_permissions && /^[^[:space:]]/ {
+    in_permissions = 0
+  }
+
+  in_permissions && /^  contents: read$/ {
+    contents_read++
+    next
+  }
+
+  in_permissions && /^  [[:alnum:]_-]+:/ {
+    unexpected_permission++
+  }
+
+  END {
+    exit !(permissions_count == 1 && contents_read == 1 && unexpected_permission == 0)
+  }
+' "$workflow" ||
+  grep -Eq '^[[:space:]]+permissions:' "$workflow" ||
+  grep -Eq '^[[:space:]]*permissions:[[:space:]]*write-all([[:space:]]*(#.*)?)?$' "$workflow" ||
+  grep -Eq '^[[:space:]]+[[:alnum:]_-]+:[[:space:]]*write([[:space:]]*(#.*)?)?$' "$workflow"; then
+  printf '%s\n' "GitHub Actions must grant only top-level read access to repository contents." >&2
+  exit 1
+fi
+
+
+if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the credential-free checkout boundary." >&2
   exit 1
 fi
 
@@ -276,7 +437,6 @@ if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
   printf '%s\n' "Frontend React and audit contracts must remain pinned." >&2
   exit 1
 fi
-
 if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "def _metadata_string_list" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "must be a non-empty list" "$ROOT_DIR/src/huggingface_uploader.py" ||

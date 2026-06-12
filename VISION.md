@@ -55,7 +55,8 @@ Current baseline:
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
 - GitHub Actions runs the offline Python baseline and clean frontend
-  lint/build/audit checks across active Python and Node releases.
+  lint/build/audit checks across active Python and Node releases without
+  persisting checkout credentials.
 
 Next priorities:
 

@@ -15,7 +15,8 @@ hosted workflow ran it for pushes and pull requests.
 - Added a Node 20/22/24 matrix that performs `npm ci`, frontend linting,
   production builds, and moderate-severity npm audits.
 - Pinned workflow actions by commit, granted read-only repository access,
-  enabled stale-run cancellation, and bounded every job.
+  disabled persisted checkout credentials, enabled stale-run cancellation, and
+  bounded every job.
 - Refreshed compatible frontend dependencies and updated React/React DOM to
   19.2.7 while retaining the established Next 15 production build.
 - Extended the shell baseline and docs so the hosted CI path stays visible.
