@@ -172,6 +172,8 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_logs_response_summary_without_raw_body" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_accepts_only_http_200" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "(400, False)" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "(404, False)" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "(429, False)" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "Model {model} validation returned status {response.status}" "$ROOT_DIR/src/poe_client.py" ||
   grep -Fq "return response.status < 500" "$ROOT_DIR/src/poe_client.py" ||

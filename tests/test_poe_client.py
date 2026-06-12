@@ -98,8 +98,10 @@ class PoeClientTests(unittest.TestCase):
             (200, True),
             (201, False),
             (302, False),
+            (400, False),
             (401, False),
             (403, False),
+            (404, False),
             (429, False),
             (500, False),
         ):
