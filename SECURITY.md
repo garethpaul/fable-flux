@@ -46,6 +46,8 @@ Helpful reports include:
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or
   generated-story uploads.
+- Keep both jobs on the explicit Ubuntu 24.04 image until a separately reviewed
+  runner migration validates every matrix entry.
 - Review found shell execution, subprocess, or dynamic evaluation surfaces; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.
