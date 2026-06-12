@@ -209,9 +209,8 @@ class PoeClient:
                 logging.warning(f"Model {model} not found (404)")
                 return False
             else:
-                # For other status codes, assume temporary issues
                 logging.warning(f"Model {model} validation returned status {response.status}")
-                return response.status < 500  # Assume 4xx are permanent, 5xx are temporary
+                return False
         except Exception as e:
             logging.error(f"Error processing validation response for {model}: {e}")
             return False

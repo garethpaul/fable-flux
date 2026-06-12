@@ -87,7 +87,9 @@ response bodies are also omitted from logs. Its local rate limiter rejects
 invalid zero or negative limits and rechecks token state after sleeping before
 allowing another upstream request. Retry handling applies one failure-specific
 delay per actual retry and returns immediately once the retry budget is
-exhausted.
+exhausted. Model preflight treats only HTTP 200 as proof of accessibility;
+authentication, authorization, redirect, rate-limit, and server statuses fail
+closed.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
@@ -134,6 +136,8 @@ npm run audit
   unless there is a specific reviewed need.
 - Poe model validation response bodies should be summarized by length rather
   than logged directly.
+- Poe model accessibility should be accepted only after an HTTP 200 validation
+  response.
 - Keep story safety, age appropriateness, and educational value validation in
   place for generation changes.
 - Treat public dataset and model claims as reproducible artifacts tied to
@@ -141,3 +145,5 @@ npm run audit
 
 See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.
 See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
+See `docs/plans/2026-06-12-poe-model-validation-status.md` for the fail-closed
+model accessibility contract.
