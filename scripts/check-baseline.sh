@@ -188,6 +188,52 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   exit 1
 fi
 
+"$PYTHON" - "$ROOT_DIR/tests/test_poe_client.py" <<'PY'
+import ast
+import sys
+from pathlib import Path
+
+test_path = Path(sys.argv[1])
+tree = ast.parse(test_path.read_text(), filename=str(test_path))
+expected = {
+    200: True,
+    201: False,
+    302: False,
+    400: False,
+    401: False,
+    403: False,
+    404: False,
+    429: False,
+    500: False,
+}
+matrix = None
+
+for node in ast.walk(tree):
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        continue
+    if node.name != "test_model_validation_accepts_only_http_200":
+        continue
+    for child in ast.walk(node):
+        if not isinstance(child, ast.For):
+            continue
+        if not isinstance(child.target, (ast.Tuple, ast.List)):
+            continue
+        names = [item.id for item in child.target.elts if isinstance(item, ast.Name)]
+        if names != ["status", "expected"]:
+            continue
+        try:
+            matrix = dict(ast.literal_eval(child.iter))
+        except (TypeError, ValueError, SyntaxError):
+            pass
+
+if matrix is None or any(matrix.get(status) is not result for status, result in expected.items()):
+    print(
+        "Poe validation test must retain the complete explicit HTTP status matrix.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
+
 if ! grep -Fq "isinstance(frontmatter, dict)" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "def _validate_string_list_field" "$ROOT_DIR/src/story_validator.py" ||
   ! grep -Fq "non-empty list of strings" "$ROOT_DIR/src/story_validator.py" ||
@@ -231,13 +277,37 @@ if ! grep -Fq "status: completed" "$POE_RETRY_PLAN"; then
   exit 1
 fi
 
-if ! grep -Fq "Status: Completed" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "23 tests" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "27391848731" "$POE_STATUS_PLAN" ||
-  ! grep -Fq "27391849643" "$POE_STATUS_PLAN"; then
-  printf '%s\n' "Poe validation status plan must remain completed with hosted matrix verification recorded." >&2
-  exit 1
-fi
+"$PYTHON" - "$POE_STATUS_PLAN" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+plan_path = Path(sys.argv[1])
+text = plan_path.read_text()
+status_headings = re.findall(r"^## Status: .+$", text, flags=re.MULTILINE)
+
+try:
+    verification = text.split("## Verification Completed\n", 1)[1]
+except IndexError:
+    verification = ""
+
+required_evidence = (
+    "- `make check` passes locally with 23 tests.",
+    "- GitHub Actions push run `27391848731` passed",
+    "- GitHub Actions pull-request run `27391849643` passed",
+)
+
+if (
+    status_headings != ["## Status: Completed"]
+    or any(evidence not in verification for evidence in required_evidence)
+    or re.search(r"\b(?:pending|todo|tbd|not run)\b", verification, flags=re.IGNORECASE)
+):
+    print(
+        "Poe validation status plan must remain completed with actual hosted matrix verification recorded.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
 
 if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document the hosted baseline." >&2
