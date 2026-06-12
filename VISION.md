@@ -48,10 +48,13 @@ Current baseline:
   by length.
 - The Poe client rate limiter validates positive limits and rechecks token
   state after sleeps before permitting the next upstream request.
+- Poe retries use one failure-specific backoff delay per actual retry and
+  return immediately when the configured retry budget is exhausted.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
-- GitHub Actions runs the offline `make check` baseline for pushes and pull
-  requests.
+- GitHub Actions runs the offline Python baseline and clean frontend
+  lint/build/audit checks across active Python and Node releases without
+  persisting checkout credentials.
 
 Next priorities:
 

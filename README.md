@@ -71,7 +71,7 @@ artifacts under `output/huggingface/`.
 
 ```bash
 cd front-end
-npm install
+npm ci
 cp .env.local.example .env.local
 npm run dev
 ```
@@ -85,7 +85,9 @@ The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
 response bodies are also omitted from logs. Its local rate limiter rejects
 invalid zero or negative limits and rechecks token state after sleeping before
-allowing another upstream request.
+allowing another upstream request. Retry handling applies one failure-specific
+delay per actual retry and returns immediately once the retry budget is
+exhausted.
 
 Story markdown must use mapping-shaped YAML frontmatter. Sequence, scalar, or
 empty frontmatter is rejected by both quick and full validation before quality
@@ -110,8 +112,11 @@ offline diversity, prompt, and Poe rate-limit tests, performs static frontend
 proxy checks, and runs frontend lint when `front-end/node_modules` is present.
 It also guards frontmatter parsing and quick validation so malformed metadata
 does not reach story quality checks or dataset export records.
-GitHub Actions runs the same offline `make check` baseline with Python 3.12 and
-minimal test dependencies for pushes and pull requests.
+GitHub Actions runs the offline Python baseline with pinned minimal dependencies
+on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
+clean frontend installs, linting, production builds, and moderate-severity npm
+audits. Actions are pinned by commit, repository access is read-only, and
+checkout credentials are not persisted in either job.
 
 Run frontend checks after touching the app:
 
@@ -119,6 +124,7 @@ Run frontend checks after touching the app:
 cd front-end
 npm run lint
 npm run build
+npm run audit
 ```
 
 ## Security And Privacy

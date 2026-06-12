@@ -2,8 +2,14 @@
 
 ## 2026-06-10
 
-- Added a GitHub Actions workflow that installs minimal Python dependencies and
-  runs the offline `make check` baseline for pushes and pull requests.
+- Corrected Poe retry backoff so timeout and rate-limit failures sleep once per
+  actual retry and exhausted attempts return without an unnecessary delay.
+- Added pinned Python 3.10/3.12/3.14 and Node 20/22/24 GitHub Actions matrices
+  for offline tests, frontend linting, production builds, and npm audit.
+- Disabled persisted checkout credentials in both hosted jobs and enforced the
+  read-only workflow boundary in the offline source contract.
+- Pinned minimal CI dependencies, refreshed compatible frontend packages, and
+  updated React and React DOM to 19.2.7.
 
 ## 2026-06-09
 

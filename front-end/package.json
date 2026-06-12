@@ -6,12 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "NEXT_PRIVATE_BUILD_WORKER=1 next build --no-lint",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "next": "15.5.19",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

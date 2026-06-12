@@ -8,6 +8,7 @@ UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequ
 VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
 POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
+POE_RETRY_PLAN="$ROOT_DIR/docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 PYTHON=${PYTHON:-python3}
 
@@ -34,6 +35,7 @@ for path in \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
+  "requirements-ci.txt" \
   "SECURITY.md" \
   "VISION.md" \
   "config/generation_config.yaml" \
@@ -41,6 +43,7 @@ for path in \
   "data/settings.json" \
   "data/tags.json" \
   "front-end/.env.local.example" \
+  "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
   "generate_stories.py" \
@@ -62,6 +65,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
+  "docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -165,6 +169,10 @@ if ! grep -Fq "def _response_body_summary" "$ROOT_DIR/src/poe_client.py" ||
   ! grep -Fq "test_rate_limiter_rechecks_token_after_waiting" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_response_body_summary_omits_raw_response_content" "$ROOT_DIR/tests/test_poe_client.py" ||
   ! grep -Fq "test_model_validation_logs_response_summary_without_raw_body" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "if attempt < max_retries" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "await asyncio.sleep(retry_delay)" "$ROOT_DIR/src/poe_client.py" ||
+  ! grep -Fq "test_timeout_retry_sleeps_once_and_exhausted_attempt_returns_immediately" "$ROOT_DIR/tests/test_poe_client.py" ||
+  ! grep -Fq "test_rate_limit_retry_uses_provider_backoff_once" "$ROOT_DIR/tests/test_poe_client.py" ||
   grep -Fq "error_data" "$ROOT_DIR/src/poe_client.py" ||
   grep -Fq "Raw response:" "$ROOT_DIR/src/poe_client.py" ||
   grep -Eq "logging\\.(error|warning|info|debug).*response_text" "$ROOT_DIR/src/poe_client.py"; then
@@ -200,19 +208,132 @@ if ! grep -Fq "post-sleep token check" "$ROOT_DIR/SECURITY.md"; then
   exit 1
 fi
 
+if ! grep -Fq "one backoff delay per actual retry" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document Poe retry backoff boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$POE_RETRY_PLAN"; then
+  printf '%s\n' "Poe retry plan must remain completed: $POE_RETRY_PLAN" >&2
+  exit 1
+fi
+
 if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document the hosted baseline." >&2
   exit 1
 fi
 
-if ! grep -Fq "actions/setup-python@v5" "$ROOT_DIR/.github/workflows/check.yml" ||
-  ! grep -Fq 'python-version: "3.12"' "$ROOT_DIR/.github/workflows/check.yml" ||
-  ! grep -Fq "python -m pip install PyYAML aiohttp" "$ROOT_DIR/.github/workflows/check.yml" ||
-  ! grep -Fq "make check" "$ROOT_DIR/.github/workflows/check.yml"; then
-  printf '%s\n' "GitHub Actions workflow must install minimal Python dependencies and run make check." >&2
+workflow="$ROOT_DIR/.github/workflows/check.yml"
+if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$workflow" ||
+  ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$workflow" ||
+  ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
+  ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
+  ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
+  ! grep -Fq "run: make check" "$workflow" ||
+  ! grep -Fq "run: npm ci" "$workflow" ||
+  ! grep -Fq "run: npm run lint" "$workflow" ||
+  ! grep -Fq "run: npm run build" "$workflow" ||
+  ! grep -Fq "run: npm run audit" "$workflow" ||
+  ! grep -Fq "workflow_dispatch:" "$workflow" ||
+  ! grep -Fq "cancel-in-progress: true" "$workflow"; then
+  printf '%s\n' "GitHub Actions workflow must run pinned Python and frontend matrices." >&2
   exit 1
 fi
 
+if [ "$(grep -Ec '^[[:space:]]+(-[[:space:]]+)?uses: actions/checkout@' "$workflow")" -ne 2 ]; then
+  printf '%s\n' "GitHub Actions must contain exactly one checkout step per job." >&2
+  exit 1
+fi
+
+if ! awk '
+  function finish_step() {
+    if (checkout) {
+      checkout_count++
+      if (persist_credentials) {
+        secure_checkout_count++
+      }
+    }
+    checkout = 0
+    with_block = 0
+    persist_credentials = 0
+  }
+
+  /^      - / {
+    finish_step()
+  }
+
+  /^        uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  /^      - uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  checkout && /^        with:$/ {
+    with_block = 1
+  }
+
+  checkout && with_block && /^          persist-credentials: false$/ {
+    persist_credentials = 1
+  }
+
+  END {
+    finish_step()
+    exit !(checkout_count == 2 && secure_checkout_count == 2)
+  }
+' "$workflow"; then
+  printf '%s\n' "Every pinned checkout step must disable persisted credentials." >&2
+  exit 1
+fi
+
+if ! awk '
+  /^permissions:$/ {
+    permissions_count++
+    in_permissions = 1
+    next
+  }
+
+  in_permissions && /^[^[:space:]]/ {
+    in_permissions = 0
+  }
+
+  in_permissions && /^  contents: read$/ {
+    contents_read++
+    next
+  }
+
+  in_permissions && /^  [[:alnum:]_-]+:/ {
+    unexpected_permission++
+  }
+
+  END {
+    exit !(permissions_count == 1 && contents_read == 1 && unexpected_permission == 0)
+  }
+' "$workflow" ||
+  grep -Eq '^[[:space:]]*permissions:[[:space:]]*write-all([[:space:]]*(#.*)?)?$' "$workflow" ||
+  grep -Eq '^[[:space:]]+[[:alnum:]_-]+:[[:space:]]*write([[:space:]]*(#.*)?)?$' "$workflow"; then
+  printf '%s\n' "GitHub Actions must grant only top-level read access to repository contents." >&2
+  exit 1
+fi
+
+if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the credential-free checkout boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
+  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
+  exit 1
+fi
+
+if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
+  ! grep -Fq '"react-dom": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
+  ! grep -Fq '"audit": "npm audit --audit-level=moderate"' "$ROOT_DIR/front-end/package.json"; then
+  printf '%s\n' "Frontend React and audit contracts must remain pinned." >&2
+  exit 1
+fi
 if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "def _metadata_string_list" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "must be a non-empty list" "$ROOT_DIR/src/huggingface_uploader.py" ||
