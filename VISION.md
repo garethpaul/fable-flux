@@ -46,6 +46,8 @@ Current baseline:
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized
   by length.
+- Poe model preflight accepts only HTTP 200 as proof of accessibility and fails
+  closed for all other statuses.
 - The Poe client rate limiter validates positive limits and rechecks token
   state after sleeps before permitting the next upstream request.
 - Poe retries use one failure-specific backoff delay per actual retry and

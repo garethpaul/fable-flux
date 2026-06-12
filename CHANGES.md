@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Made Poe model preflight fail closed for every status except HTTP 200 instead
+  of treating unhandled 2xx, 3xx, and 4xx responses as accessible.
+- Added regression coverage for unexpected success, redirect, authentication,
+  authorization, rate-limit, and server responses without logging bodies.
+
 ## 2026-06-10
 
 - Corrected Poe retry backoff so timeout and rate-limit failures sleep once per

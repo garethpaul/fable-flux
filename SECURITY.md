@@ -35,6 +35,9 @@ Helpful reports include:
   quality checks or JSONL publishing.
 - Poe model validation response bodies should be omitted from logs and
   summarized by length instead.
+- Poe model validation should fail closed for every response except HTTP 200;
+  authentication, authorization, rate-limit, redirect, and server statuses do
+  not prove accessibility.
 - Poe client rate limits should reject zero or negative configuration values
   and require a post-sleep token check before sending another upstream request.
 - Poe client failures should use one backoff delay per actual retry and should
