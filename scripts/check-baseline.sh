@@ -8,6 +8,7 @@ UPLOADER_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-uploader-sequ
 VALIDATOR_SEQUENCE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-validator-sequence-metadata-guard.md"
 POE_VALIDATION_LOG_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-validation-log-boundary.md"
 POE_RATE_LIMITER_PLAN="$ROOT_DIR/docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md"
+CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -29,6 +30,7 @@ require_file() {
 for path in \
   ".env.example" \
   ".gitignore" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
@@ -60,6 +62,7 @@ for path in \
   "docs/plans/2026-06-09-fable-flux-frontmatter-mapping-guard.md" \
   "docs/plans/2026-06-09-fable-flux-poe-response-log-boundary.md" \
   "docs/plans/2026-06-09-fable-flux-poe-rate-limiter-guard.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
@@ -115,6 +118,7 @@ if ! grep -Fq "make check" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Validator and uploader metadata" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/README.md" ||
   ! grep -Fq "Poe rate-limit tests" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/README.md" ||
   ! grep -Fq "rechecks token state after sleeping" "$ROOT_DIR/README.md" ||
   ! grep -Fq "string lists so quality checks" "$ROOT_DIR/README.md" ||
   ! grep -Fq "children's educational" "$ROOT_DIR/README.md"; then
@@ -126,6 +130,7 @@ if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "unused characters and settings" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Story validation requires" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Poe model validation response bodies" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "rate limiter validates positive limits" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "string lists before quick" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "frontend proxy" "$ROOT_DIR/VISION.md"; then
@@ -192,6 +197,19 @@ fi
 
 if ! grep -Fq "post-sleep token check" "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY must document Poe rate limiter boundaries." >&2
+  exit 1
+fi
+
+if ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY must document the hosted baseline." >&2
+  exit 1
+fi
+
+if ! grep -Fq "actions/setup-python@v5" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq 'python-version: "3.12"' "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "python -m pip install PyYAML aiohttp" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "make check" "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions workflow must install minimal Python dependencies and run make check." >&2
   exit 1
 fi
 
@@ -320,6 +338,12 @@ fi
 
 if ! grep -Fq "make check" "$POE_VALIDATION_LOG_PLAN"; then
   printf '%s\n' "Poe validation logging boundary plan must record make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CI_PLAN" ||
+  ! grep -Fq "make check" "$CI_PLAN"; then
+  printf '%s\n' "CI baseline plan must record completed make check verification." >&2
   exit 1
 fi
 

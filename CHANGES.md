@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Added a GitHub Actions workflow that installs minimal Python dependencies and
+  runs the offline `make check` baseline for pushes and pull requests.
+
 ## 2026-06-09
 
 - Hardened the Poe client rate limiter to reject invalid limits and recheck

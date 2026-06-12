@@ -110,6 +110,8 @@ offline diversity, prompt, and Poe rate-limit tests, performs static frontend
 proxy checks, and runs frontend lint when `front-end/node_modules` is present.
 It also guards frontmatter parsing and quick validation so malformed metadata
 does not reach story quality checks or dataset export records.
+GitHub Actions runs the same offline `make check` baseline with Python 3.12 and
+minimal test dependencies for pushes and pull requests.
 
 Run frontend checks after touching the app:
 
@@ -132,3 +134,4 @@ npm run build
   checked-in configuration.
 
 See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.
+See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
