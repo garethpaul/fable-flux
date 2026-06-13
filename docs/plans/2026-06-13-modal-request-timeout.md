@@ -1,7 +1,7 @@
 ---
 title: Modal Proxy Request Timeout
 type: reliability
-status: in_progress
+status: completed
 date: 2026-06-13
 ---
 
@@ -73,3 +73,29 @@ Files: `README.md`, `SECURITY.md`, `VISION.md`, `CHANGES.md`
 - Run dependency audit, shell syntax, `git diff --check`, and intended-file
   secret scans.
 - Take one bounded exact-head hosted matrix snapshot after push; do not poll.
+
+## Verification
+
+- Node 20.19.5 `npm ci`, frontend lint, Next.js 15.5.19 production build, and
+  moderate audit passed; lint retained five existing non-failing image warnings.
+- Removing the fetch signal produced the expected `missing signal mutation failed` result.
+- Changing the deadline from 30 seconds produced the expected `changed deadline mutation failed` result.
+- Moving the signal behind response handling produced the expected `reordered signal mutation failed` result.
+- The copied offline baseline passed all 23 Python tests and the new frontend
+  source contracts.
+- The rooted full gate, diff check, shell syntax, and intended-file secret scan
+  passed.
+- The exact pushed head still requires the bounded hosted Node matrix across
+  Node 20, 22, and 24 before aggregate promotion.
+
+## Work Completed
+
+- Added a named 30-second Modal request timeout and applied it directly to
+  server-side fetch.
+- Added a generic HTTP 504 timeout response and removed raw exception-object
+  logging from the outer request failure path.
+- Added exact source and ordering contracts for timeout value, signal placement,
+  response status, and generic logs.
+- Updated project reliability, security, and maintenance guidance.
+- Replayed the exact hosted runner pin patch from source commit
+  `a3fd99872688acb12dbde74babc7688b05df6491`; PR #3 remains open and unchanged.

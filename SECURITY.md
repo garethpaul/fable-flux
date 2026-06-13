@@ -42,6 +42,8 @@ Helpful reports include:
   and require a post-sleep token check before sending another upstream request.
 - Poe client failures should use one backoff delay per actual retry and should
   not sleep after the configured retry budget has been exhausted.
+- Modal proxy requests must use a 30-second abort signal and return a generic
+  gateway-timeout response without logging raw exception objects.
 - GitHub Actions runs pinned Python and Node matrices for the offline baseline,
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or

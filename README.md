@@ -79,7 +79,8 @@ npm run dev
 The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
 validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
-avoids logging raw upstream story content.
+avoids logging raw upstream story content. The server bounds each Modal generation request to 30 seconds
+and returns a generic gateway-timeout response.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation

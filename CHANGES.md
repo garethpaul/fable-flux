@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-13
+
+- Bounded Modal generation requests to 30 seconds and return a generic 504
+  response without logging raw request exceptions.
+
 ## 2026-06-12
 
 - Pinned both hosted jobs to Ubuntu 24.04 and added exact runner, plan, and

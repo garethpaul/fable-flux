@@ -42,6 +42,8 @@ Current baseline:
   the project has no narrower installed lint/build toolchain.
 - The frontend proxy requires environment-backed Modal configuration with an
   HTTPS hostname and server-side prompt bounds.
+- Modal generation requests have a 30-second server-side deadline and generic
+  timeout failures.
 - The Python Poe client avoids logging raw upstream response bodies and records
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized

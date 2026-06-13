@@ -12,6 +12,7 @@ POE_RETRY_PLAN="$ROOT_DIR/docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md"
 POE_STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-poe-model-validation-status.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 RUNNER_PIN_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-runner-pin.md"
+MODAL_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-request-timeout.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -70,6 +71,7 @@ for path in \
   "docs/plans/2026-06-10-fable-flux-poe-retry-backoff.md" \
   "docs/plans/2026-06-12-poe-model-validation-status.md" \
   "docs/plans/2026-06-12-hosted-runner-pin.md" \
+  "docs/plans/2026-06-13-modal-request-timeout.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -492,12 +494,36 @@ if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq 'url.protocol === "https:"' "$route" ||
   ! grep -Fq "url.hostname.length > 0" "$route" ||
   ! grep -Fq "trimmedPrompt.length === 0 || trimmedPrompt.length > 200" "$route" ||
+  ! grep -Fq "const MODAL_REQUEST_TIMEOUT_MS = 30_000" "$route" ||
+  ! grep -Fq "signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS)" "$route" ||
+  ! grep -Fq 'error.name === "TimeoutError"' "$route" ||
+  ! grep -Fq '{ status: 504 }' "$route" ||
+  ! grep -Fq 'console.error("Modal API request timed out")' "$route" ||
+  ! grep -Fq 'console.error("Modal API request failed")' "$route" ||
   grep -Eq "Modal_API_KEY|POE_API_KEY" "$route" ||
   grep -Fq "GPT-5-Mini" "$route" ||
+  grep -Fq 'console.error("API route error:", error)' "$route" ||
   grep -Eq "console\\.error\\(.*(storyContent|modalData|errorText)" "$route"; then
   printf '%s\n' "Frontend proxy must require env-backed Modal config, HTTPS URL parsing, bounded prompts, and no raw generated-content logs." >&2
   exit 1
 fi
+
+python3 - "$route" <<'PY'
+import pathlib
+import sys
+
+source = pathlib.Path(sys.argv[1]).read_text()
+fetch_start = source.find("const modalResponse = await fetch(")
+signal = source.find("signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS)", fetch_start)
+response_check = source.find("if (!modalResponse.ok)", fetch_start)
+timeout_handler = source.find('error.name === "TimeoutError"', response_check)
+gateway_timeout = source.find("{ status: 504 }", timeout_handler)
+
+if -1 in (fetch_start, signal, response_check, timeout_handler, gateway_timeout) or not (
+    fetch_start < signal < response_check < timeout_handler < gateway_timeout
+):
+    raise SystemExit("Modal timeout signal and 504 handling must remain in request order")
+PY
 
 if grep -Eq 'shell=True|Popen\(" "\.join\(cmd\)' "$ROOT_DIR/serving/main.py" ||
   ! grep -Fq "subprocess.Popen(cmd)" "$ROOT_DIR/serving/main.py"; then
@@ -594,6 +620,23 @@ fi
 if ! grep -Fq "status: completed" "$CI_PLAN" ||
   ! grep -Fq "make check" "$CI_PLAN"; then
   printf '%s\n' "CI baseline plan must record completed make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$MODAL_TIMEOUT_PLAN" ||
+  ! grep -Fq "missing signal mutation failed" "$MODAL_TIMEOUT_PLAN" ||
+  ! grep -Fq "changed deadline mutation failed" "$MODAL_TIMEOUT_PLAN" ||
+  ! grep -Fq "reordered signal mutation failed" "$MODAL_TIMEOUT_PLAN" ||
+  ! grep -Fq "hosted Node matrix" "$MODAL_TIMEOUT_PLAN"; then
+  printf '%s\n' "Modal request timeout plan must record completed local verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "bounds each Modal generation request to 30 seconds" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "Modal proxy requests must use a 30-second abort signal" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Modal generation requests have a 30-second server-side deadline" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "Bounded Modal generation requests to 30 seconds" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Modal request timeout boundary." >&2
   exit 1
 fi
 
