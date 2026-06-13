@@ -44,6 +44,8 @@ Helpful reports include:
   not sleep after the configured retry budget has been exhausted.
 - Modal proxy requests must use a 30-second abort signal and return a generic
   gateway-timeout response without logging raw exception objects.
+- Successful Modal proxy responses must declare an `application/json` media
+  type before body parsing; missing or non-JSON types fail closed generically.
 - GitHub Actions runs pinned Python and Node matrices for the offline baseline,
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or

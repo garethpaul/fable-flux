@@ -2,7 +2,7 @@
 title: Modal Response Content-Type Boundary
 type: security
 date: 2026-06-13
-status: planned
+status: completed
 execution: code
 ---
 
@@ -39,3 +39,31 @@ HTML, text, or missing media types fail closed at the proxy boundary.
 - Changing Modal request payloads, model choice, or response story schema.
 - Accepting vendor-specific or text JSON media types.
 - Deploying the proxy or calling external AI services.
+
+## Work Completed
+
+- Added a strict media-type helper that accepts `application/json`
+  case-insensitively with optional parameters.
+- Kept the successful-status check before the media-type boundary and moved no
+  existing timeout, prompt, endpoint, model, or story-shape behavior.
+- Returned the existing generic upstream failure when the Content-Type is
+  missing or non-JSON, without logging raw headers or bodies.
+- Added ordering, exact-media-type, documentation, and plan-evidence contracts
+  to the offline baseline.
+
+## Verification Completed
+
+- `make check` ran all 23 Python tests and reached the intentional plan-status
+  gate before this completed evidence was recorded. Afterward, `make lint`,
+  `make test`, `make build`, and `make check` all passed the completed baseline.
+- Clean frontend installs, lint, production builds, and moderate npm audits
+  passed locally on Node 20, 22, and 24. Lint retained five existing
+  `@next/next/no-img-element` warnings and reported no errors.
+- Eight isolated hostile mutations were rejected, covering helper removal,
+  broadened media acceptance, missing-value acceptance, parse-before-check
+  ordering, header-contract removal, documentation removal, stale plan status,
+  and missing verification evidence.
+- `git diff --check`, intended-file artifact checks, and added-line secret scans
+  passed.
+- No Modal credentials, live requests, billable generation, deployments, or
+  generated story data were used.
