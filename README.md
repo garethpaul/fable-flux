@@ -79,7 +79,8 @@ npm run dev
 The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
 validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
-avoids logging raw upstream story content.
+avoids logging raw upstream story content. The server bounds each Modal generation request to 30 seconds
+and returns a generic gateway-timeout response.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
@@ -119,6 +120,8 @@ on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
 clean frontend installs, linting, production builds, and moderate-severity npm
 audits. Actions are pinned by commit, repository access is read-only, and
 checkout credentials are not persisted in either job.
+Both hosted matrices run on explicit Ubuntu 24.04 rather than a moving
+`ubuntu-latest` image.
 
 Run frontend checks after touching the app:
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { StoryResponse, ApiError } from "@/types/story";
 
 const DEFAULT_MODAL_MODEL = "garethpaul/gpt-oss-20b-fableflux-mxfp4";
+const MODAL_REQUEST_TIMEOUT_MS = 30_000;
 
 function parseModalApiUrl(rawUrl: string | undefined): URL | null {
   if (!rawUrl) {
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
 
     const modalResponse = await fetch(modalApiUrl.toString(), {
       method: "POST",
+      signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -140,7 +142,15 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("API route error:", error);
+    if (error instanceof Error && error.name === "TimeoutError") {
+      console.error("Modal API request timed out");
+      return NextResponse.json(
+        { error: "Story generation timed out" } as ApiError,
+        { status: 504 }
+      );
+    }
+
+    console.error("Modal API request failed");
     return NextResponse.json(
       { error: "Internal server error" } as ApiError,
       { status: 500 }

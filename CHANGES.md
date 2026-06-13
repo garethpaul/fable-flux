@@ -1,7 +1,14 @@
 # Changes
 
+## 2026-06-13
+
+- Bounded Modal generation requests to 30 seconds and return a generic 504
+  response without logging raw request exceptions.
+
 ## 2026-06-12
 
+- Pinned both hosted jobs to Ubuntu 24.04 and added exact runner, plan, and
+  documentation contracts that reject floating image labels.
 - Made Poe model preflight fail closed for every status except HTTP 200 instead
   of treating unhandled 2xx, 3xx, and 4xx responses as accessible.
 - Added regression coverage for unexpected success, redirect, authentication,
