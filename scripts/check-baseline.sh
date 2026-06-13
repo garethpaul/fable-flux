@@ -14,6 +14,7 @@ CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 RUNNER_PIN_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-runner-pin.md"
 MODAL_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-request-timeout.md"
 PUBLISHING_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-publishing-serving-ownership.md"
+MODAL_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-response-content-type.md"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
 
@@ -76,6 +77,7 @@ for path in \
   "docs/plans/2026-06-12-hosted-runner-pin.md" \
   "docs/plans/2026-06-13-modal-request-timeout.md" \
   "docs/plans/2026-06-13-publishing-serving-ownership.md" \
+  "docs/plans/2026-06-13-modal-response-content-type.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -504,6 +506,13 @@ if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq '{ status: 504 }' "$route" ||
   ! grep -Fq 'console.error("Modal API request timed out")' "$route" ||
   ! grep -Fq 'console.error("Modal API request failed")' "$route" ||
+  ! grep -Fq "function hasJsonContentType(value: string | null): boolean" "$route" ||
+  ! grep -Fq "if (!value) {" "$route" ||
+  ! grep -Fq "return false;" "$route" ||
+  ! grep -Fq 'value.split(";", 1)[0].trim().toLowerCase()' "$route" ||
+  ! grep -Fq 'mediaType === "application/json"' "$route" ||
+  ! grep -Fq 'modalResponse.headers.get("content-type")' "$route" ||
+  ! grep -Fq 'console.error("Modal API returned a non-JSON response")' "$route" ||
   grep -Eq "Modal_API_KEY|POE_API_KEY" "$route" ||
   grep -Fq "GPT-5-Mini" "$route" ||
   grep -Fq 'console.error("API route error:", error)' "$route" ||
@@ -520,14 +529,32 @@ source = pathlib.Path(sys.argv[1]).read_text()
 fetch_start = source.find("const modalResponse = await fetch(")
 signal = source.find("signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS)", fetch_start)
 response_check = source.find("if (!modalResponse.ok)", fetch_start)
+content_type_check = source.find('if (!hasJsonContentType(modalResponse.headers.get("content-type")))', response_check)
+body_parse = source.find("const modalData = await modalResponse.json()", content_type_check)
 timeout_handler = source.find('error.name === "TimeoutError"', response_check)
 gateway_timeout = source.find("{ status: 504 }", timeout_handler)
 
-if -1 in (fetch_start, signal, response_check, timeout_handler, gateway_timeout) or not (
-    fetch_start < signal < response_check < timeout_handler < gateway_timeout
+if -1 in (fetch_start, signal, response_check, content_type_check, body_parse, timeout_handler, gateway_timeout) or not (
+    fetch_start < signal < response_check < content_type_check < body_parse < timeout_handler < gateway_timeout
 ):
-    raise SystemExit("Modal timeout signal and 504 handling must remain in request order")
+    raise SystemExit("Modal status, JSON media type, body parse, timeout signal, and 504 handling must remain in request order")
 PY
+
+if ! grep -Fq "status: completed" "$MODAL_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$MODAL_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "Node 20, 22, and 24" "$MODAL_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "No Modal" "$MODAL_CONTENT_TYPE_PLAN"; then
+  printf '%s\n' "Modal response Content-Type plan must record truthful completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'must declare `application/json` before the proxy parses' "$ROOT_DIR/README.md" ||
+  ! grep -Fq 'Successful Modal proxy responses must declare an `application/json` media' "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq 'Successful Modal responses are parsed only after an `application/json`' "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq 'Require successful Modal responses to declare `application/json` before body' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project documentation must preserve the Modal JSON media-type boundary." >&2
+  exit 1
+fi
 
 if grep -Eq 'shell=True|Popen\(" "\.join\(cmd\)' "$ROOT_DIR/serving/main.py" ||
   ! grep -Fq "subprocess.Popen(cmd)" "$ROOT_DIR/serving/main.py"; then

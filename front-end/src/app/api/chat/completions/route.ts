@@ -17,6 +17,15 @@ function parseModalApiUrl(rawUrl: string | undefined): URL | null {
   }
 }
 
+function hasJsonContentType(value: string | null): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const mediaType = value.split(";", 1)[0].trim().toLowerCase();
+  return mediaType === "application/json";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json();
@@ -98,6 +107,14 @@ export async function POST(request: NextRequest) {
           error: "Failed to generate story",
           details: `API returned ${modalResponse.status}`,
         } as ApiError,
+        { status: 500 }
+      );
+    }
+
+    if (!hasJsonContentType(modalResponse.headers.get("content-type"))) {
+      console.error("Modal API returned a non-JSON response");
+      return NextResponse.json(
+        { error: "Failed to generate story" } as ApiError,
         { status: 500 }
       );
     }

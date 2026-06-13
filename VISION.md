@@ -44,6 +44,8 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - Modal generation requests have a 30-second server-side deadline and generic
   timeout failures.
+- Successful Modal responses are parsed only after an `application/json`
+  Content-Type check; missing or non-JSON media types fail closed.
 - The Python Poe client avoids logging raw upstream response bodies and records
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized

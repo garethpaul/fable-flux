@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Require successful Modal responses to declare `application/json` before body
+  parsing, with generic failures for missing or non-JSON media types.
 - Bounded Modal generation requests to 30 seconds and return a generic 504
   response without logging raw request exceptions.
 - Added explicit ownership, approval, provenance, credential, safety/privacy,
