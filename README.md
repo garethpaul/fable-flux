@@ -67,6 +67,12 @@ python upload_to_huggingface.py --quick --repo-name username/children-stories-da
 The uploader converts markdown story files into JSONL and writes temporary
 artifacts under `output/huggingface/`.
 
+Dataset publication and model deployment are owner-approved external operations,
+not CI tasks. Follow
+[`docs/publishing-serving-ownership.md`](docs/publishing-serving-ownership.md)
+for roles, provenance, safety/privacy review, least-privilege credentials,
+postflight evidence, rollback, and incident response.
+
 ## Frontend
 
 ```bash

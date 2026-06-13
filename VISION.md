@@ -59,11 +59,13 @@ Current baseline:
 - GitHub Actions runs the offline Python baseline and clean frontend
   lint/build/audit checks across active Python and Node releases without
   persisting checkout credentials.
+- Dataset publishing and Modal serving now have explicit maintainer, operator,
+  independent reviewer, provenance, safety/privacy, rollback, and incident
+  ownership boundaries that remain outside offline CI.
 
 Next priorities:
 
 - Add API route tests and broaden retry/error-path coverage
-- Document dataset publishing and model-serving ownership boundaries
 - Keep frontend API proxy behavior secure and user-friendly
 - Keep the hosted GitHub Actions baseline aligned with local offline checks
 - Keep the pinned Ubuntu runner deliberate across both language matrices

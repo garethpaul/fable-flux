@@ -1,7 +1,7 @@
 ---
 title: Dataset Publishing And Model Serving Ownership
 type: operations
-status: planned
+status: completed
 date: 2026-06-13
 ---
 
@@ -79,3 +79,28 @@ Files: `README.md`, `AGENTS.md`, `SECURITY.md`, `VISION.md`, `CHANGES.md`
 - A runbook cannot enforce external organization permissions or service roles.
 - Ownership names and platform procedures can drift unless release operators
   update the evidence for every publication or deployment.
+
+## Verification
+
+- An isolated full `make check` passed all 23 offline Python tests; frontend
+  lint was explicitly skipped because this worktree has no installed
+  `front-end/node_modules`.
+- Eleven isolated hostile mutations were rejected for weakened independent
+  review, distinct reviewer identity, provenance, secret lifetime, approval,
+  child-safety, rollback, incident token rotation, offline limits, roadmap, and
+  plan-status requirements.
+- No Poe, Hugging Face, Modal, dataset publication, deployment, network request,
+  billable generation, prompt, generated story, or real credential was used.
+- Shell syntax, `git diff --check`, exact eight-path review, unchanged source,
+  test, configuration, manifest, lockfile, workflow, and Makefile inspection,
+  credential-value addition inspection, and generated-artifact inspection passed.
+- The exact pushed head still requires the clean hosted offline Python and
+  frontend matrices plus one bounded hosted snapshot.
+
+## Work Completed
+
+- Added accountable roles, explicit approval, release evidence, dataset and
+  serving procedures, least-privilege credential handling, postflight review,
+  rollback, and incident response.
+- Added section-scoped maintenance contracts and updated project guidance while
+  preserving the offline verification boundary.
