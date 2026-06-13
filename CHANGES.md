@@ -2,6 +2,7 @@
 
 ## 2026-06-13
 
+- Made Make verification independent of the caller's working directory.
 - Added one runtime shape guard for generated and stored stories so malformed
   string fields or character lists fail before API success or React rendering.
 - Require successful Modal responses to declare `application/json` before body

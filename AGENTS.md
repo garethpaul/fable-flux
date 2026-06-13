@@ -17,6 +17,7 @@ Fable Flux is an AI-assisted educational story pipeline. The repository contains
 
 - Install dependencies: `python3 -m pip install -r requirements.txt`; `python3 -m pip install -e .`
 - Full baseline: `make check`
+- External baseline: `make -f /absolute/path/to/Makefile check`
 - Lint/static checks: `make lint`
 - Tests: `make test`
 - Build: `make build`
