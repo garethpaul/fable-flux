@@ -46,6 +46,8 @@ Current baseline:
   timeout failures.
 - Successful Modal responses are parsed only after an `application/json`
   Content-Type check; missing or non-JSON media types fail closed.
+- Modal output and stored stories share one runtime shape guard before API
+  success or React rendering.
 - The Python Poe client avoids logging raw upstream response bodies and records
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized
@@ -67,7 +69,7 @@ Current baseline:
 
 Next priorities:
 
-- Add API route tests and broaden retry/error-path coverage
+- Broaden API route transport and retry/error-path coverage.
 - Keep frontend API proxy behavior secure and user-friendly
 - Keep the hosted GitHub Actions baseline aligned with local offline checks
 - Keep the pinned Ubuntu runner deliberate across both language matrices

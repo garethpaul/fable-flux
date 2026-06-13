@@ -15,6 +15,7 @@ RUNNER_PIN_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-runner-pin.md"
 MODAL_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-request-timeout.md"
 PUBLISHING_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-publishing-serving-ownership.md"
 MODAL_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-response-content-type.md"
+STORY_RESPONSE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-story-response-shape-validation.md"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
 
@@ -52,6 +53,8 @@ for path in \
   "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
+  "front-end/src/app/story/StoryPageClient.tsx" \
+  "front-end/src/types/story.ts" \
   "docs/publishing-serving-ownership.md" \
   "generate_stories.py" \
   "requirements.txt" \
@@ -78,6 +81,7 @@ for path in \
   "docs/plans/2026-06-13-modal-request-timeout.md" \
   "docs/plans/2026-06-13-publishing-serving-ownership.md" \
   "docs/plans/2026-06-13-modal-response-content-type.md" \
+  "docs/plans/2026-06-13-story-response-shape-validation.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -493,6 +497,55 @@ if ! grep -Fq "lint: check" "$ROOT_DIR/Makefile" ||
 fi
 
 route="$ROOT_DIR/front-end/src/app/api/chat/completions/route.ts"
+story_page="$ROOT_DIR/front-end/src/app/story/StoryPageClient.tsx"
+story_types="$ROOT_DIR/front-end/src/types/story.ts"
+
+for story_shape_contract in \
+  'function isNonEmptyString(value: unknown): value is string' \
+  'typeof value === "string" && value.trim().length > 0' \
+  'Array.isArray(characters) && characters.length > 0 && characters.every(isCharacter)' \
+  'isNonEmptyString(story.title)' \
+  'isNonEmptyString(story.setting)' \
+  'isNonEmptyString(story.story)' \
+  'isNonEmptyString(story.moral)'; do
+  if ! grep -Fq "$story_shape_contract" "$story_types"; then
+    printf '%s\n' "Story response runtime contract is missing: $story_shape_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "const storyData: unknown = JSON.parse(storyContent)" "$route" ||
+  ! grep -Fq "if (!isStoryResponse(storyData))" "$route" ||
+  ! grep -Fq "const parsedStory: unknown = JSON.parse(storyData)" "$story_page" ||
+  ! grep -Fq "if (!isStoryResponse(parsedStory))" "$story_page"; then
+  printf '%s\n' "Modal and stored story consumers must share runtime shape validation." >&2
+  exit 1
+fi
+
+for story_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "2 valid plus 9 malformed runtime" \
+  "Next.js 15.5.19 production build" \
+  "Python 3.12.8" \
+  "isolated Python 3.14.0 environment" \
+  "Six isolated hostile mutations were rejected" \
+  "No Poe, Hugging Face, Modal"; do
+  if ! grep -Fq "$story_plan_contract" "$STORY_RESPONSE_PLAN"; then
+    printf '%s\n' "Story response plan must record completed verification: $story_plan_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "shared runtime shape guard" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "shared runtime shape guard" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "share one runtime shape guard" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "one runtime shape guard" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "shared runtime shape guard" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Story response validation documentation must remain synchronized." >&2
+  exit 1
+fi
+
 if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "process.env.MODAL_API_URL" "$route" ||
   ! grep -Fq "process.env.MODAL_MODEL" "$route" ||

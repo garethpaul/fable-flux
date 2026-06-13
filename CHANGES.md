@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added one runtime shape guard for generated and stored stories so malformed
+  string fields or character lists fail before API success or React rendering.
 - Require successful Modal responses to declare `application/json` before body
   parsing, with generic failures for missing or non-JSON media types.
 - Bounded Modal generation requests to 30 seconds and return a generic 504
