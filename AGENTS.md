@@ -49,6 +49,7 @@ Fable Flux is an AI-assisted educational story pipeline. The repository contains
 - Poe rate limits must stay positive and recheck token state after sleeping. Retries must sleep once per actual retry and return immediately after the retry budget is exhausted.
 - The frontend proxy must use server-side environment configuration, require an HTTPS Modal endpoint with a hostname, bound prompt length, and avoid raw generated-content logs.
 - Treat `data/stories`, `output`, and `logs` as potentially sensitive generated content. Do not commit new generated stories or runtime logs during maintenance work.
+- Follow `docs/publishing-serving-ownership.md` before any Hugging Face publication or Modal deployment. Preserve explicit owner/reviewer evidence, provenance, safety/privacy review, least-privilege secret storage, rollback, and incident rotation boundaries; offline CI does not authorize a release.
 
 ## Agent workflow
 

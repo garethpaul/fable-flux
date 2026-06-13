@@ -4,6 +4,9 @@
 
 - Bounded Modal generation requests to 30 seconds and return a generic 504
   response without logging raw request exceptions.
+- Added explicit ownership, approval, provenance, credential, safety/privacy,
+  postflight, rollback, and incident boundaries for Hugging Face dataset
+  publication and Modal model serving.
 
 ## 2026-06-12
 

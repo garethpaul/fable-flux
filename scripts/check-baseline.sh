@@ -13,6 +13,8 @@ POE_STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-poe-model-validation-status.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 RUNNER_PIN_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-runner-pin.md"
 MODAL_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-request-timeout.md"
+PUBLISHING_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-publishing-serving-ownership.md"
+PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
@@ -49,6 +51,7 @@ for path in \
   "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
+  "docs/publishing-serving-ownership.md" \
   "generate_stories.py" \
   "requirements.txt" \
   "serving/main.py" \
@@ -72,6 +75,7 @@ for path in \
   "docs/plans/2026-06-12-poe-model-validation-status.md" \
   "docs/plans/2026-06-12-hosted-runner-pin.md" \
   "docs/plans/2026-06-13-modal-request-timeout.md" \
+  "docs/plans/2026-06-13-publishing-serving-ownership.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -637,6 +641,107 @@ if ! grep -Fq "bounds each Modal generation request to 30 seconds" "$ROOT_DIR/RE
   ! grep -Fq "Modal generation requests have a 30-second server-side deadline" "$ROOT_DIR/VISION.md" ||
   ! grep -Fq "Bounded Modal generation requests to 30 seconds" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "Project guidance must document the Modal request timeout boundary." >&2
+  exit 1
+fi
+
+"$PYTHON" - "$PUBLISHING_OWNERSHIP" <<'PY'
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+required_sections = {
+    "Status And Offline Limit": [
+        "repository maintenance gate is offline",
+        "does not publish datasets",
+        "deploy Modal applications",
+        "generate billable stories",
+        "assess live story quality",
+    ],
+    "Roles And Approval": [
+        "repository maintainer owns source review",
+        "dataset publisher owns the Hugging Face namespace",
+        "model-serving operator owns the Modal workspace",
+        "release reviewer independently verifies provenance",
+        "independent reviewer must be a different person",
+        "explicit review decision separate from possession of a publishing credential",
+    ],
+    "Required Release Evidence": [
+        "source commit SHA",
+        "input dataset provenance",
+        "independent reviewer",
+        "artifact/model revision",
+        "rollback target",
+    ],
+    "Dataset Publication": [
+        "child-safety",
+        "age appropriateness",
+        "educational-fit",
+        "least-privilege token",
+        "immutable dataset revision or commit",
+    ],
+    "Model Serving": [
+        "resource and billing limits",
+        "rollback deployment",
+        "records explicit approval",
+        "platform-managed secrets",
+        "bounded synthetic smoke checks",
+    ],
+    "Credentials And Sensitive Data": [
+        "`HF_TOKEN`",
+        "`MODAL_API_KEY`",
+        "`POE_API_KEY`",
+        "least privilege and shortest practical lifetime",
+        "Never place them in git",
+    ],
+    "Rollback And Incidents": [
+        "restore the last reviewed revision",
+        "disable or roll back the deployment",
+        "rotate the affected token",
+        "review platform audit logs",
+        "notify the repository maintainer, service owner, and reviewer",
+    ],
+}
+
+sections = {}
+current = None
+for line in source.splitlines():
+    if line.startswith("## "):
+        current = line[3:]
+        sections[current] = []
+    elif current is not None:
+        sections[current].append(line)
+
+for heading, phrases in required_sections.items():
+    body = "\n".join(sections.get(heading, []))
+    if not body:
+        raise SystemExit("Publishing ownership section missing: " + heading)
+    normalized_body = " ".join(body.split())
+    for phrase in phrases:
+        if " ".join(phrase.split()) not in normalized_body:
+            raise SystemExit(
+                "Publishing ownership assertion missing from "
+                + heading
+                + ": "
+                + phrase
+            )
+PY
+
+if ! grep -Fq "status: completed" "$PUBLISHING_OWNERSHIP_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$PUBLISHING_OWNERSHIP_PLAN" ||
+  ! grep -Fq "hosted offline Python" "$PUBLISHING_OWNERSHIP_PLAN" ||
+  ! grep -Fq "frontend matrices" "$PUBLISHING_OWNERSHIP_PLAN" ||
+  ! grep -Fq "bounded hosted snapshot" "$PUBLISHING_OWNERSHIP_PLAN"; then
+  printf '%s\n' "Publishing and serving ownership plan must record completed local verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "docs/publishing-serving-ownership.md" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "docs/publishing-serving-ownership.md" "$ROOT_DIR/AGENTS.md" ||
+  ! grep -Fq "docs/publishing-serving-ownership.md" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "independent reviewer" "$ROOT_DIR/VISION.md" ||
+  grep -Fq "Document dataset publishing and model-serving ownership boundaries" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "ownership, approval, provenance" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must preserve publishing and serving ownership boundaries." >&2
   exit 1
 fi
 
