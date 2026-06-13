@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { StoryResponse, ApiError } from "@/types/story";
+import { isStoryResponse, ApiError } from "@/types/story";
 
 const DEFAULT_MODAL_MODEL = "garethpaul/gpt-oss-20b-fableflux-mxfp4";
 const MODAL_REQUEST_TIMEOUT_MS = 30_000;
@@ -134,17 +134,10 @@ export async function POST(request: NextRequest) {
 
     // Parse the JSON response from the AI
     try {
-      const storyData: StoryResponse = JSON.parse(storyContent);
+      const storyData: unknown = JSON.parse(storyContent);
 
-      // Validate that all required fields are present
-      if (
-        !storyData.title ||
-        !storyData.characters ||
-        !storyData.setting ||
-        !storyData.story ||
-        !storyData.moral
-      ) {
-        throw new Error("Missing required story fields");
+      if (!isStoryResponse(storyData)) {
+        throw new Error("Invalid story response shape");
       }
 
       return NextResponse.json(storyData);

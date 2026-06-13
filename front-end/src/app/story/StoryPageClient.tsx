@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { StoryResponse } from "@/types/story";
+import { isStoryResponse, StoryResponse } from "@/types/story";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StoryFormatter from "@/components/StoryFormatter";
 
@@ -17,7 +17,10 @@ export default function StoryPageClient() {
 
     if (storyData) {
       try {
-        const parsedStory = JSON.parse(storyData) as StoryResponse;
+        const parsedStory: unknown = JSON.parse(storyData);
+        if (!isStoryResponse(parsedStory)) {
+          throw new Error("Invalid stored story shape");
+        }
         setStory(parsedStory);
       } catch (error) {
         console.error("Failed to parse story data:", error);

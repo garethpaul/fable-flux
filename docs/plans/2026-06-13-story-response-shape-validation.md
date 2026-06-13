@@ -2,11 +2,13 @@
 title: Story Response Shape Validation
 type: reliability
 date: 2026-06-13
-status: planned
+status: completed
 execution: code
 ---
 
 # Story Response Shape Validation
+
+## Status: Completed
 
 ## Summary
 
@@ -52,3 +54,30 @@ same consumer without validation.
 - Changing story generation prompts, Modal request parameters, UI layout,
   publishing flows, or dataset schemas.
 - Adding a new runtime validation dependency.
+
+## Work Completed
+
+- Added a dependency-free `isStoryResponse` runtime type guard beside the
+  shared TypeScript contract.
+- Required non-empty string story fields and a valid non-empty characters value.
+- Applied the same guard after Modal JSON parsing and after local storage JSON
+  parsing before either consumer accepts the object.
+- Synchronized reliability, security, vision, change, and contributor guidance.
+
+## Verification Completed
+
+- Compiled the production guard and passed 2 valid plus 9 malformed runtime
+  fixtures covering scalar fields, empty/invalid characters, objects, arrays,
+  and absent values.
+- Frontend lint passed with the existing five `no-img-element` warnings and no
+  errors; the Next.js 15.5.19 production build compiled, type-checked, and
+  generated all routes successfully under Node 20.19.5.
+- `make check`, `make lint`, `make test`, and `make build` passed all 23 offline
+  tests under Python 3.12.8 and under an isolated Python 3.14.0 environment with
+  the pinned `requirements-ci.txt` dependencies.
+- `sh -n scripts/check-baseline.sh` and `git diff --check` passed.
+- Six isolated hostile mutations were rejected across non-empty strings,
+  character arrays, API validation, stored-story validation, plan status, and
+  mutation evidence.
+- No Poe, Hugging Face, Modal, dataset publication, or generated-story network
+  call was made.

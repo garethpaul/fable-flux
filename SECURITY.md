@@ -46,6 +46,9 @@ Helpful reports include:
   gateway-timeout response without logging raw exception objects.
 - Successful Modal proxy responses must declare an `application/json` media
   type before body parsing; missing or non-JSON types fail closed generically.
+- Generated and stored stories must pass the shared runtime shape guard before
+  API success or React rendering; malformed string fields and character lists
+  fail closed without logging generated content.
 - GitHub Actions runs pinned Python and Node matrices for the offline baseline,
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or

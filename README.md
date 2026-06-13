@@ -87,7 +87,9 @@ The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
 avoids logging raw upstream story content. The server bounds each Modal generation request to 30 seconds
 and returns a generic gateway-timeout response. Successful upstream responses
-must declare `application/json` before the proxy parses their bodies.
+must declare `application/json` before the proxy parses their bodies. Generated
+and stored stories must also pass one shared runtime shape guard before the API
+returns them or the story page renders them.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
