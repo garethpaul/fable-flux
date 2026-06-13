@@ -119,6 +119,9 @@ make check
 The `make lint`, `make test`, and `make build` aliases run the same offline
 baseline when no narrower project-specific gate is installed.
 
+The same gate can run through an absolute Makefile path from another working
+directory: `make -f /path/to/fable-flux/Makefile check`.
+
 The baseline compiles Python entry points, runs synthetic validator tests plus
 offline diversity, prompt, and Poe rate-limit tests, performs static frontend
 proxy checks, and runs frontend lint when `front-end/node_modules` is present.

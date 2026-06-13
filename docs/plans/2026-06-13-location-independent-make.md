@@ -2,7 +2,7 @@
 title: Location-Independent Fable Flux Verification
 type: reliability
 date: 2026-06-13
-status: in progress
+status: completed
 execution: code
 ---
 
@@ -31,3 +31,13 @@ offline gate works outside the repository directory.
 ## Non-Goals
 
 - Installing optional model, dataset, frontend, or hosted-service tooling.
+
+## Verification
+
+- `make check` passed all 23 offline tests at repository root and from /tmp
+  through the absolute Makefile path.
+- Optional readability, sentiment, Hugging Face, and frontend dependencies
+  remained explicitly unavailable or skipped without weakening the gate.
+- Four hostile root, checker-path, documentation, and completed-plan mutations
+  were rejected.
+- Shell syntax, diff, exact-path, secret, and generated-artifact checks passed.

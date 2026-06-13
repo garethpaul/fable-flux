@@ -23,6 +23,8 @@ Priority:
 
 Current baseline:
 
+- Make verification resolves repository paths independently of the caller's
+  working directory.
 - Tracked local Python virtualenv and bytecode cache artifacts have been
   removed.
 - `.gitignore` excludes generated environments, Python caches, frontend
