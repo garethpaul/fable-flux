@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-06-14
+
+- The Modal proxy rejects HTTP redirects after endpoint validation.
+
 ## 2026-06-13
 
 - Made Make verification independent of the caller's working directory.

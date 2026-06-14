@@ -17,12 +17,16 @@ PUBLISHING_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-publishing-serving-ow
 MODAL_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-response-content-type.md"
 STORY_RESPONSE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-story-response-shape-validation.md"
 LOCATION_INDEPENDENT_MAKE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-location-independent-make.md"
+MODAL_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-redirect-boundary.md"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
 
 cleanup_bytecode() {
-  find "$ROOT_DIR" -maxdepth 4 -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
-  find "$ROOT_DIR" -maxdepth 4 -type f -name "*.pyc" -delete 2>/dev/null || true
+  for artifact_dir in "$ROOT_DIR/__pycache__" "$ROOT_DIR/src/__pycache__" "$ROOT_DIR/tests/__pycache__"; do
+    if [ -d "$artifact_dir" ]; then
+      rm -rf -- "$artifact_dir"
+    fi
+  done
 }
 
 trap cleanup_bytecode EXIT
@@ -84,6 +88,7 @@ for path in \
   "docs/plans/2026-06-13-modal-response-content-type.md" \
   "docs/plans/2026-06-13-story-response-shape-validation.md" \
   "docs/plans/2026-06-13-location-independent-make.md" \
+  "docs/plans/2026-06-14-modal-redirect-boundary.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -577,6 +582,7 @@ if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq "trimmedPrompt.length === 0 || trimmedPrompt.length > 200" "$route" ||
   ! grep -Fq "const MODAL_REQUEST_TIMEOUT_MS = 30_000" "$route" ||
   ! grep -Fq "signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS)" "$route" ||
+  ! grep -Fq 'redirect: "error"' "$route" ||
   ! grep -Fq 'error.name === "TimeoutError"' "$route" ||
   ! grep -Fq '{ status: 504 }' "$route" ||
   ! grep -Fq 'console.error("Modal API request timed out")' "$route" ||
@@ -603,17 +609,33 @@ import sys
 source = pathlib.Path(sys.argv[1]).read_text()
 fetch_start = source.find("const modalResponse = await fetch(")
 signal = source.find("signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS)", fetch_start)
+redirect = source.find('redirect: "error"', signal)
+headers = source.find("headers: {", redirect)
 response_check = source.find("if (!modalResponse.ok)", fetch_start)
 content_type_check = source.find('if (!hasJsonContentType(modalResponse.headers.get("content-type")))', response_check)
 body_parse = source.find("const modalData = await modalResponse.json()", content_type_check)
 timeout_handler = source.find('error.name === "TimeoutError"', response_check)
 gateway_timeout = source.find("{ status: 504 }", timeout_handler)
 
-if -1 in (fetch_start, signal, response_check, content_type_check, body_parse, timeout_handler, gateway_timeout) or not (
-    fetch_start < signal < response_check < content_type_check < body_parse < timeout_handler < gateway_timeout
+if -1 in (fetch_start, signal, redirect, headers, response_check, content_type_check, body_parse, timeout_handler, gateway_timeout) or not (
+    fetch_start < signal < redirect < headers < response_check < content_type_check < body_parse < timeout_handler < gateway_timeout
 ):
-    raise SystemExit("Modal status, JSON media type, body parse, timeout signal, and 504 handling must remain in request order")
+    raise SystemExit("Modal timeout, redirect, status, JSON media type, body parse, and 504 handling must remain in request order")
 PY
+
+if ! grep -Fq "status: completed" "$MODAL_REDIRECT_PLAN" ||
+  ! grep -Fq "make check" "$MODAL_REDIRECT_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$MODAL_REDIRECT_PLAN"; then
+  printf '%s\n' "Modal redirect boundary plan must record completed verification." >&2
+  exit 1
+fi
+
+for document in "$ROOT_DIR/README.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq "rejects HTTP redirects" "$document"; then
+    printf '%s\n' "$document must document that the Modal proxy rejects HTTP redirects." >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "status: completed" "$MODAL_CONTENT_TYPE_PLAN" ||
   ! grep -Fq "hostile mutations were rejected" "$MODAL_CONTENT_TYPE_PLAN" ||

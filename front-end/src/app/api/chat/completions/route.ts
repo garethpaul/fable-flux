@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     const modalResponse = await fetch(modalApiUrl.toString(), {
       method: "POST",
       signal: AbortSignal.timeout(MODAL_REQUEST_TIMEOUT_MS),
+      redirect: "error",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
