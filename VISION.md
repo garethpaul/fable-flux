@@ -56,6 +56,8 @@ Current baseline:
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized
   by length.
+- Poe validation error and generation bodies are bounded to 1 MiB of decoded
+  bytes and strict UTF-8 before parsing; unexpected shapes remain content-free.
 - Poe model preflight accepts only HTTP 200 as proof of accessibility and fails
   closed for all other statuses.
 - The Poe client rate limiter validates positive limits and rechecks token

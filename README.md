@@ -94,7 +94,9 @@ returns them or the story page renders them.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
-response bodies are also omitted from logs. Its local rate limiter rejects
+response bodies are also omitted from logs. Validation error and generation
+response reads share a 1 MiB decompressed-byte limit and strict UTF-8 decoding;
+oversized or malformed bodies fail closed before JSON parsing. Its local rate limiter rejects
 invalid zero or negative limits and rechecks token state after sleeping before
 allowing another upstream request. Retry handling applies one failure-specific
 delay per actual retry and returns immediately once the retry budget is

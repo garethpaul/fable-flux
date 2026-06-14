@@ -13,6 +13,14 @@ from typing import Optional, Dict, Any, List
 from asyncio import Semaphore
 import os
 
+
+MAX_POE_RESPONSE_BYTES = 1024 * 1024
+POE_RESPONSE_CHUNK_BYTES = 64 * 1024
+
+
+class PoeResponseTooLarge(ValueError):
+    pass
+
 class RateLimiter:
     """High-performance rate limiter using token bucket algorithm for concurrent requests"""
     
@@ -148,6 +156,21 @@ class PoeClient:
     def _response_body_summary(response_text: str) -> str:
         """Describe an upstream response without logging its raw content."""
         return f"{len(response_text or '')} characters"
+
+    @staticmethod
+    async def _read_response_text(response) -> str:
+        """Read one Poe response within the fixed decoded-byte boundary."""
+        content_length = response.content_length
+        if content_length is not None and content_length > MAX_POE_RESPONSE_BYTES:
+            raise PoeResponseTooLarge("Poe response exceeds the 1 MiB limit")
+
+        body = bytearray()
+        async for chunk in response.content.iter_chunked(POE_RESPONSE_CHUNK_BYTES):
+            if len(body) + len(chunk) > MAX_POE_RESPONSE_BYTES:
+                raise PoeResponseTooLarge("Poe response exceeds the 1 MiB limit")
+            body.extend(chunk)
+
+        return bytes(body).decode("utf-8", errors="strict")
     
     async def validate_model_accessibility(self, model: str) -> bool:
         """
@@ -192,7 +215,7 @@ class PoeClient:
                 logging.debug(f"Model {model} is accessible")
                 return True
             elif response.status == 400:
-                response_text = await response.text()
+                response_text = await self._read_response_text(response)
                 error_msg = response_text.lower()
                 if 'model' in error_msg or 'invalid' in error_msg:
                     logging.warning(
@@ -211,6 +234,12 @@ class PoeClient:
             else:
                 logging.warning(f"Model {model} validation returned status {response.status}")
                 return False
+        except PoeResponseTooLarge:
+            logging.error(f"Poe validation response for {model} exceeded the 1 MiB limit")
+            return False
+        except UnicodeDecodeError:
+            logging.error(f"Poe validation response for {model} was not valid UTF-8; body omitted")
+            return False
         except Exception as e:
             logging.error(f"Error processing validation response for {model}: {e}")
             return False
@@ -342,7 +371,7 @@ Always follow the exact YAML frontmatter format and story structure provided in 
         
         try:
             async with self.session.post(self.base_url, json=payload, headers=headers) as response:
-                response_text = await response.text()
+                response_text = await self._read_response_text(response)
                 
                 if response.status == 200:
                     try:
@@ -353,7 +382,11 @@ Always follow the exact YAML frontmatter format and story structure provided in 
                             logging.debug(f"Generated content length: {len(content)} characters with model {selected_model}")
                             return content
                         else:
-                            logging.error(f"Unexpected API response format from {selected_model}: {result}")
+                            logging.error(
+                                "Unexpected API response format from %s; response body omitted (%s)",
+                                selected_model,
+                                self._response_body_summary(response_text),
+                            )
                             return None
                             
                     except json.JSONDecodeError as e:
@@ -386,6 +419,12 @@ Always follow the exact YAML frontmatter format and story structure provided in 
                     )
                     response.raise_for_status()
                     
+        except PoeResponseTooLarge:
+            logging.error(f"Poe response from {selected_model} exceeded the 1 MiB limit")
+            return None
+        except UnicodeDecodeError:
+            logging.error(f"Poe response from {selected_model} was not valid UTF-8; body omitted")
+            return None
         except aiohttp.ClientResponseError:
             raise  # Re-raise HTTP errors
         except Exception as e:

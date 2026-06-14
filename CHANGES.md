@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Bounded Poe validation error and generation responses to 1 MiB of strict
+  UTF-8 and removed parsed upstream content from shape-error logs.
 - The Modal proxy rejects HTTP redirects after endpoint validation.
 
 ## 2026-06-13
