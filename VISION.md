@@ -1,5 +1,7 @@
 ## Fable Flux Vision
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 This document explains the current state and direction of the project.
 Project overview and developer docs: [`README.md`](README.md)
 

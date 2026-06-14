@@ -3,6 +3,7 @@ import { isStoryResponse, ApiError } from "@/types/story";
 
 const DEFAULT_MODAL_MODEL = "garethpaul/gpt-oss-20b-fableflux-mxfp4";
 const MODAL_REQUEST_TIMEOUT_MS = 30_000;
+const MODAL_RESPONSE_MAX_BYTES = 1024 * 1024;
 
 function parseModalApiUrl(rawUrl: string | undefined): URL | null {
   if (!rawUrl) {
@@ -24,6 +25,57 @@ function hasJsonContentType(value: string | null): boolean {
 
   const mediaType = value.split(";", 1)[0].trim().toLowerCase();
   return mediaType === "application/json";
+}
+
+async function readBoundedJsonResponse(response: Response): Promise<unknown> {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength !== null) {
+    const declaredBytes = Number(contentLength);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes < 0) {
+      throw new Error("Modal response Content-Length is invalid");
+    }
+    if (declaredBytes > MODAL_RESPONSE_MAX_BYTES) {
+      throw new Error("Modal response body is too large");
+    }
+  }
+
+  if (!response.body) {
+    throw new Error("Modal response body is missing");
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MODAL_RESPONSE_MAX_BYTES) {
+      await reader.cancel();
+      throw new Error("Modal response body is too large");
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(body));
+}
+
+function storyContentFromModalResponse(value: unknown): string | null {
+  if (value === null || typeof value !== "object") return null;
+  const choices = (value as Record<string, unknown>).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+  const firstChoice = choices[0];
+  if (firstChoice === null || typeof firstChoice !== "object") return null;
+  const message = (firstChoice as Record<string, unknown>).message;
+  if (message === null || typeof message !== "object") return null;
+  const content = (message as Record<string, unknown>).content;
+  return typeof content === "string" && content.length > 0 ? content : null;
 }
 
 export async function POST(request: NextRequest) {
@@ -120,10 +172,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const modalData = await modalResponse.json();
+    const modalData = await readBoundedJsonResponse(modalResponse);
 
     // Extract the story content from Modal's response
-    const storyContent = modalData.choices?.[0]?.message?.content;
+    const storyContent = storyContentFromModalResponse(modalData);
 
     if (!storyContent) {
       console.error("No content in Modal response");

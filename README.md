@@ -1,5 +1,7 @@
 # Fable Flux
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 <!-- README-OVERVIEW-IMAGE -->
 ![Project overview](docs/readme-overview.svg)
 
