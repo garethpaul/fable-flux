@@ -18,6 +18,7 @@ MODAL_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-modal-response-content-
 STORY_RESPONSE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-story-response-shape-validation.md"
 LOCATION_INDEPENDENT_MAKE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-location-independent-make.md"
 MODAL_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-redirect-boundary.md"
+MODAL_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-response-body-boundary.md"
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
@@ -600,6 +601,15 @@ if ! grep -Fq "process.env.MODAL_API_KEY" "$route" ||
   ! grep -Fq 'mediaType === "application/json"' "$route" ||
   ! grep -Fq 'modalResponse.headers.get("content-type")' "$route" ||
   ! grep -Fq 'console.error("Modal API returned a non-JSON response")' "$route" ||
+  ! grep -Fq "const MODAL_RESPONSE_MAX_BYTES = 1024 * 1024" "$route" ||
+  ! grep -Fq "async function readBoundedJsonResponse(response: Response)" "$route" ||
+  ! grep -Fq 'response.headers.get("content-length")' "$route" ||
+  ! grep -Fq "response.body.getReader()" "$route" ||
+  ! grep -Fq "totalBytes > MODAL_RESPONSE_MAX_BYTES" "$route" ||
+  ! grep -Fq "await reader.cancel()" "$route" ||
+  ! grep -Fq 'new TextDecoder("utf-8", { fatal: true })' "$route" ||
+  ! grep -Fq "function storyContentFromModalResponse(value: unknown): string | null" "$route" ||
+  ! grep -Fq "const storyContent = storyContentFromModalResponse(modalData)" "$route" ||
   grep -Eq "Modal_API_KEY|POE_API_KEY" "$route" ||
   grep -Fq "GPT-5-Mini" "$route" ||
   grep -Fq 'console.error("API route error:", error)' "$route" ||
@@ -619,7 +629,7 @@ redirect = source.find('redirect: "error"', signal)
 headers = source.find("headers: {", redirect)
 response_check = source.find("if (!modalResponse.ok)", fetch_start)
 content_type_check = source.find('if (!hasJsonContentType(modalResponse.headers.get("content-type")))', response_check)
-body_parse = source.find("const modalData = await modalResponse.json()", content_type_check)
+body_parse = source.find("const modalData = await readBoundedJsonResponse(modalResponse)", content_type_check)
 timeout_handler = source.find('error.name === "TimeoutError"', response_check)
 gateway_timeout = source.find("{ status: 504 }", timeout_handler)
 
@@ -641,6 +651,13 @@ for document in "$ROOT_DIR/README.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.
     printf '%s\n' "$document must document that the Modal proxy rejects HTTP redirects." >&2
     exit 1
   fi
+done
+
+for document in "$ROOT_DIR/README.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  grep -Fq "bounds Modal JSON responses to 1 MiB of strict UTF-8" "$document" || exit 1
+done
+for contract in "Status: Completed" "make check" "hostile mutations"; do
+  grep -Fq "$contract" "$MODAL_BODY_PLAN" || exit 1
 done
 
 if ! grep -Fq "status: completed" "$MODAL_CONTENT_TYPE_PLAN" ||

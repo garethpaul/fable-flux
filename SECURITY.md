@@ -1,5 +1,7 @@
 # Security Policy
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 ## Supported Versions
 
 The supported security scope for `fable-flux` is the current default branch, `main`. Older commits, tags, branches, forks, demos, and generated artifacts are not actively supported unless the repository explicitly marks them as maintained.

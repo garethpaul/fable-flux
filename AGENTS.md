@@ -42,6 +42,8 @@ Fable Flux is an AI-assisted educational story pipeline. The repository contains
 
 ## Safety and gotchas
 
+- The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 - Notebook outputs can be large or noisy; clear unnecessary execution output before committing notebooks.
 - Keep `POE_API_KEY`, `HF_TOKEN`, `MODAL_API_KEY`, and service-specific values in local environment files only. Checked-in examples must remain placeholders.
 - Keep hosted checks offline. Tests and CI must not call Poe, Hugging Face, Modal, publish datasets, or generate billable stories.
