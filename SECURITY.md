@@ -42,6 +42,10 @@ Helpful reports include:
   and require a post-sleep token check before sending another upstream request.
 - Poe client failures should use one backoff delay per actual retry and should
   not sleep after the configured retry budget has been exhausted.
+- Poe validation error and generation responses must stay within the shared
+  1 MiB decompressed-byte limit and decode as strict UTF-8 before parsing.
+- Unexpected successful Poe response shapes must be logged without the parsed
+  upstream body.
 - Modal proxy requests must use a 30-second abort signal and return a generic
   gateway-timeout response without logging raw exception objects.
 - The Modal proxy rejects HTTP redirects so prompt bodies cannot be forwarded
