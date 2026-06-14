@@ -86,7 +86,8 @@ npm run dev
 
 The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
-validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
+bounds client JSON requests to 4 KiB of strict UTF-8 before parsing, validates
+prompt length, requires an HTTPS Modal endpoint with a hostname, and
 avoids logging raw upstream story content. The server bounds each Modal generation request to 30 seconds
 and rejects HTTP redirects before returning a generic gateway-timeout response.
 Successful upstream responses
@@ -167,3 +168,5 @@ See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.
 See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
 See `docs/plans/2026-06-12-poe-model-validation-status.md` for the fail-closed
 model accessibility contract.
+See `docs/plans/2026-06-14-client-request-body-boundary.md` for the bounded
+public story-request JSON contract.

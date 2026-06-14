@@ -19,21 +19,11 @@ STORY_RESPONSE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-story-response-shape-valida
 LOCATION_INDEPENDENT_MAKE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-location-independent-make.md"
 MODAL_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-redirect-boundary.md"
 MODAL_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-response-body-boundary.md"
+CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.md"
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
-
-cleanup_bytecode() {
-  for artifact_dir in "$ROOT_DIR/__pycache__" "$ROOT_DIR/src/__pycache__" "$ROOT_DIR/tests/__pycache__"; do
-    if [ -d "$artifact_dir" ]; then
-      rm -rf -- "$artifact_dir"
-    fi
-  done
-}
-
-trap cleanup_bytecode EXIT
-cleanup_bytecode
 
 require_file() {
   path=$1
@@ -92,6 +82,7 @@ for path in \
   "docs/plans/2026-06-13-story-response-shape-validation.md" \
   "docs/plans/2026-06-13-location-independent-make.md" \
   "docs/plans/2026-06-14-modal-redirect-boundary.md" \
+  "docs/plans/2026-06-14-client-request-body-boundary.md" \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
   "scripts/check-poe-response-body-boundary.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
@@ -637,7 +628,64 @@ if -1 in (fetch_start, signal, redirect, headers, response_check, content_type_c
     fetch_start < signal < redirect < headers < response_check < content_type_check < body_parse < timeout_handler < gateway_timeout
 ):
     raise SystemExit("Modal timeout, redirect, status, JSON media type, body parse, and 504 handling must remain in request order")
+
+request_media_type = source.find('if (!hasJsonContentType(request.headers.get("content-type")))')
+request_reader = source.find("requestData = await readBoundedJsonRequest(request)", request_media_type)
+prompt_read = source.find("const prompt =", request_reader)
+config_read = source.find("const apiKey = process.env.MODAL_API_KEY", prompt_read)
+if -1 in (request_media_type, request_reader, prompt_read, config_read) or not (
+    request_media_type < request_reader < prompt_read < config_read < fetch_start
+):
+    raise SystemExit("Client media type, bounded body read, prompt validation, configuration, and Modal dispatch must remain ordered")
+
+request_helper = source.split("async function readBoundedJsonRequest", 1)[1].split("async function readBoundedJsonResponse", 1)[0]
+request_helper_contracts = [
+    'request.headers.get("content-length")',
+    "declaredBytes > CLIENT_REQUEST_MAX_BYTES",
+    "request.body.getReader()",
+    "totalBytes > CLIENT_REQUEST_MAX_BYTES",
+    "await reader.cancel()",
+    'new TextDecoder("utf-8", { fatal: true })',
+]
+if any(contract not in request_helper for contract in request_helper_contracts):
+    raise SystemExit("Client request helper must enforce declared and streamed byte limits with cancellation and strict UTF-8")
 PY
+
+for client_body_contract in \
+  "const CLIENT_REQUEST_MAX_BYTES = 4 * 1024" \
+  "async function readBoundedJsonRequest(request: NextRequest)" \
+  'request.headers.get("content-length")' \
+  "declaredBytes > CLIENT_REQUEST_MAX_BYTES" \
+  "request.body.getReader()" \
+  "totalBytes > CLIENT_REQUEST_MAX_BYTES" \
+  "await reader.cancel()" \
+  'new TextDecoder("utf-8", { fatal: true })' \
+  '{ status: 415 }' \
+  'Request body must be valid JSON within 4 KiB'; do
+  if ! grep -Fq "$client_body_contract" "$route"; then
+    printf '%s\n' "Client request body contract is missing: $client_body_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq "await request.json()" "$route"; then
+  printf '%s\n' "Client request JSON must not be buffered without the byte boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CLIENT_BODY_PLAN" ||
+  ! grep -Fq "make check" "$CLIENT_BODY_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$CLIENT_BODY_PLAN"; then
+  printf '%s\n' "Client request body plan must record completed verification." >&2
+  exit 1
+fi
+
+for document in "$ROOT_DIR/README.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq "bounds client JSON requests to 4 KiB of strict UTF-8" "$document"; then
+    printf '%s\n' "$document must document the client request body boundary." >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "status: completed" "$MODAL_REDIRECT_PLAN" ||
   ! grep -Fq "make check" "$MODAL_REDIRECT_PLAN" ||

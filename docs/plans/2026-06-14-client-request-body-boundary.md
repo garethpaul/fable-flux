@@ -2,7 +2,7 @@
 title: Client Request Body Boundary
 type: security
 date: 2026-06-14
-status: in-progress
+status: completed
 execution: code
 ---
 
@@ -44,4 +44,17 @@ starting a billable upstream request.
 
 ## Verification
 
-- Pending implementation and bounded validation.
+- The focused offline baseline passed all 32 Python tests and every new
+  request-order contract before stopping only at the pending-plan assertion.
+- `npm ci --ignore-scripts`, frontend lint, the Next.js 15.5.19 production
+  build, and the moderate-severity npm audit passed on Node 20.19.5; lint kept
+  the five existing image optimization warnings and reported zero errors.
+- Six in-memory hostile mutations were rejected across the byte cap, declared
+  length guard, streamed overflow guard, reader cancellation, strict UTF-8,
+  and restoration of unbounded `request.json()` parsing.
+- Full `make check` passes from the repository and from `/tmp` through the
+  absolute Makefile path, with no live Poe, Hugging Face, or Modal calls.
+- Recursive checker cleanup was removed; generated files and directories are
+  removed only by enumerated, existence-checked paths after validation.
+- Exact intended-path, artifact, whitespace, conflict-marker, and changed-line
+  credential-pattern audits pass before delivery.

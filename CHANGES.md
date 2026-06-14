@@ -3,6 +3,8 @@
 ## 2026-06-14
 
 - The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or Modal configuration access.
 - Bounded Poe validation error and generation responses to 1 MiB of strict
   UTF-8 and removed parsed upstream content from shape-error logs.
 - The Modal proxy rejects HTTP redirects after endpoint validation.

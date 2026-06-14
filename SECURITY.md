@@ -50,6 +50,8 @@ Helpful reports include:
   upstream body.
 - Modal proxy requests must use a 30-second abort signal and return a generic
   gateway-timeout response without logging raw exception objects.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or reading Modal configuration.
 - The Modal proxy rejects HTTP redirects so prompt bodies cannot be forwarded
   after endpoint validation.
 - Successful Modal proxy responses must declare an `application/json` media

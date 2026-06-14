@@ -48,6 +48,8 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - Modal generation requests have a 30-second server-side deadline and generic
   timeout failures.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or Modal configuration access.
 - The Modal proxy rejects HTTP redirects after validating the configured HTTPS
   endpoint.
 - Successful Modal responses are parsed only after an `application/json`
