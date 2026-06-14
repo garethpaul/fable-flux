@@ -46,6 +46,8 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - Modal generation requests have a 30-second server-side deadline and generic
   timeout failures.
+- The Modal proxy rejects HTTP redirects after validating the configured HTTPS
+  endpoint.
 - Successful Modal responses are parsed only after an `application/json`
   Content-Type check; missing or non-JSON media types fail closed.
 - Modal output and stored stories share one runtime shape guard before API

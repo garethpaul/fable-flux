@@ -44,6 +44,8 @@ Helpful reports include:
   not sleep after the configured retry budget has been exhausted.
 - Modal proxy requests must use a 30-second abort signal and return a generic
   gateway-timeout response without logging raw exception objects.
+- The Modal proxy rejects HTTP redirects so prompt bodies cannot be forwarded
+  after endpoint validation.
 - Successful Modal proxy responses must declare an `application/json` media
   type before body parsing; missing or non-JSON types fail closed generically.
 - Generated and stored stories must pass the shared runtime shape guard before

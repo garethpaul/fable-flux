@@ -1,7 +1,7 @@
 ---
 title: Modal Redirect Boundary
 type: security
-status: planned
+status: completed
 date: 2026-06-14
 ---
 
@@ -31,13 +31,24 @@ forwarded to a redirect destination.
 - Changing the Modal endpoint, model, payload schema, timeout, or error body.
 - Adding dependencies or making live provider requests.
 
-## Planned Verification
+## Verification
 
-- Run the focused static route contract and the full pinned `make check` gate.
-- Run the full gate from `/tmp` through the absolute Makefile path.
-- Reject isolated hostile mutations for missing redirect policy, redirect
-  following, option ordering, documentation, and completed-plan evidence.
-- Audit exact intended paths, generated artifacts, conflict markers,
-  whitespace, and changed-line credential patterns before commit.
-- Take one bounded exact-head hosted check and code-scanning snapshot after push;
-  do not poll pending jobs.
+- The focused static route-order contract and shell syntax check passed.
+- Six isolated hostile mutations were rejected for missing redirect policy,
+  redirect following, option ordering, checker contract removal, documentation,
+  and completed-plan evidence.
+- The pinned `make check` passed 23 tests from the checkout and from `/tmp`
+  through the absolute Makefile path.
+- `npm ci --ignore-scripts`, `npm run lint`, `npm run build`, and the moderate
+  `npm audit` gate passed with zero vulnerabilities. ESLint reported zero
+  errors and five pre-existing `<img>` warnings outside this change.
+- Exact intended-path, unchanged manifest/workflow/dependency, generated-
+  artifact, untracked-file, conflict-marker, whitespace, and changed-line
+  credential-pattern audits passed.
+- Sequential security, correctness, maintainability, and testing review found
+  no actionable issue; redirect failures use the generic request-failure path
+  without logging prompts, bodies, credentials, or raw exceptions.
+- Generated `front-end/node_modules`, `front-end/.next`, and known Python cache
+  directories were removed only after existence checks.
+- One bounded exact-head hosted check and code-scanning snapshot is required
+  after push; pending jobs will not be polled.
