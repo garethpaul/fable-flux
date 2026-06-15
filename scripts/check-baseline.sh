@@ -21,7 +21,10 @@ MODAL_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-redirect-boundary.md"
 MODAL_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-response-body-boundary.md"
 CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.md"
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
+HOME_IMAGE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-home-next-image.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
+HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
+HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
 
@@ -51,6 +54,7 @@ for path in \
   "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
+  "front-end/src/app/page.tsx" \
   "front-end/src/app/story/StoryPageClient.tsx" \
   "front-end/src/types/story.ts" \
   "docs/publishing-serving-ownership.md" \
@@ -84,13 +88,16 @@ for path in \
   "docs/plans/2026-06-14-modal-redirect-boundary.md" \
   "docs/plans/2026-06-14-client-request-body-boundary.md" \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
+  "docs/plans/2026-06-15-home-next-image.md" \
   "scripts/check-poe-response-body-boundary.py" \
+  "scripts/check-home-next-image.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
 
 python3 "$POE_RESPONSE_BODY_CHECK" "$ROOT_DIR/src/poe_client.py" "$ROOT_DIR/tests/test_poe_client.py"
+"$PYTHON" "$HOME_IMAGE_CHECK" "$HOME_PAGE" "$HOME_IMAGE_PLAN"
 
 if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$ROOT_DIR/Makefile" ||
   ! grep -Fq '"$(ROOT)/scripts/check-baseline.sh"' "$ROOT_DIR/Makefile"; then

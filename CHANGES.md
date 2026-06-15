@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-15
+
+- Replaced the five raw home-page images with dimensioned Next.js image
+  components, eliminating the maintained frontend image lint warnings.
+
 ## 2026-06-14
 
 - The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.

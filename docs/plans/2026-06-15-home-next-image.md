@@ -2,7 +2,7 @@
 title: Home Page Next Image Baseline
 type: quality
 date: 2026-06-15
-status: pending
+status: completed
 execution: code
 ---
 
@@ -45,4 +45,15 @@ eliminating the maintained frontend lint warnings.
 
 ## Verification
 
-Pending implementation and validation.
+- `npm run lint` completed with zero warnings or errors, removing the five
+  previously documented `no-img-element` warnings.
+- The Next.js 15.5.19 production build completed successfully, including type
+  checking and all seven generated pages.
+- Playwright Chromium 140 desktop and mobile full-page captures confirmed the
+  responsive image constraints, stable layout, and unchanged controls. The
+  host's Chrome 80 was not used as evidence because it predates the CSS cascade
+  layers required by Tailwind 4.
+- Seven hostile mutations were rejected across raw image restoration, missing
+  import, dimension, source, class, alternative-text, and plan-status drift.
+- Full repository and external-directory `make check` verification passed with
+  the offline Python suite, frontend lint, and dependency audit.
