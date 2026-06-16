@@ -63,6 +63,7 @@ Helpful reports include:
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or
   generated-story uploads.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - Keep both jobs on the explicit Ubuntu 24.04 image until a separately reviewed
   runner migration validates every matrix entry.
 - Hugging Face publication and Modal deployment require the role, approval,

@@ -22,6 +22,7 @@ MODAL_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-response-body-boundary.md
 CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.md"
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
 HOME_IMAGE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-home-next-image.md"
+NEXT16_PLAN="$ROOT_DIR/docs/plans/2026-06-16-nextjs-16-upgrade.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
 HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
@@ -51,11 +52,14 @@ for path in \
   "data/settings.json" \
   "data/tags.json" \
   "front-end/.env.local.example" \
+  "front-end/eslint.config.mjs" \
+  "front-end/next-env.d.ts" \
   "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
   "front-end/src/app/page.tsx" \
   "front-end/src/app/story/StoryPageClient.tsx" \
+  "front-end/tsconfig.json" \
   "front-end/src/types/story.ts" \
   "docs/publishing-serving-ownership.md" \
   "generate_stories.py" \
@@ -89,6 +93,7 @@ for path in \
   "docs/plans/2026-06-14-client-request-body-boundary.md" \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
   "docs/plans/2026-06-15-home-next-image.md" \
+  "docs/plans/2026-06-16-nextjs-16-upgrade.md" \
   "scripts/check-poe-response-body-boundary.py" \
   "scripts/check-home-next-image.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
@@ -507,6 +512,89 @@ if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
   printf '%s\n' "Frontend React and audit contracts must remain pinned." >&2
   exit 1
 fi
+
+"$PYTHON" - "$ROOT_DIR/front-end/package.json" "$ROOT_DIR/front-end/package-lock.json" <<'PY'
+import json
+import sys
+
+package_path, lock_path = sys.argv[1:]
+package = json.load(open(package_path, encoding="utf-8"))
+lock = json.load(open(lock_path, encoding="utf-8"))
+root = lock.get("packages", {}).get("", {})
+installed = lock.get("packages", {})
+
+expected = "16.2.9"
+checks = {
+    "package Next.js": package.get("dependencies", {}).get("next") == expected,
+    "package ESLint config": package.get("devDependencies", {}).get("eslint-config-next") == expected,
+    "lock root Next.js": root.get("dependencies", {}).get("next") == expected,
+    "lock root ESLint config": root.get("devDependencies", {}).get("eslint-config-next") == expected,
+    "installed Next.js": installed.get("node_modules/next", {}).get("version") == expected,
+    "installed ESLint config": installed.get("node_modules/eslint-config-next", {}).get("version") == expected,
+    "Node runtime floor": package.get("engines", {}).get("node") == ">=20.9.0",
+    "development script": package.get("scripts", {}).get("dev") == "next dev",
+    "production build script": package.get("scripts", {}).get("build") == "next build",
+    "legacy direct ESLint adapter removed": "@eslint/eslintrc" not in package.get("devDependencies", {}),
+}
+
+failed = [name for name, passed in checks.items() if not passed]
+if failed:
+    raise SystemExit("Next.js 16 package contract failed: " + ", ".join(failed))
+PY
+
+eslint_config="$ROOT_DIR/front-end/eslint.config.mjs"
+for eslint_contract in \
+  'import { defineConfig, globalIgnores } from "eslint/config";' \
+  'import nextVitals from "eslint-config-next/core-web-vitals";' \
+  'import nextTs from "eslint-config-next/typescript";' \
+  '...nextVitals' \
+  '...nextTs'; do
+  if ! grep -Fq "$eslint_contract" "$eslint_config"; then
+    printf '%s\n' "Frontend must use native Next.js 16 flat ESLint configuration: $eslint_contract" >&2
+    exit 1
+  fi
+done
+if grep -Fq "FlatCompat" "$eslint_config"; then
+  printf '%s\n' "Frontend must not restore the legacy ESLint compatibility adapter." >&2
+  exit 1
+fi
+
+story_page="$ROOT_DIR/front-end/src/app/story/StoryPageClient.tsx"
+for story_storage_contract in \
+  'import { useEffect, useMemo, useSyncExternalStore } from "react";' \
+  "const storyData = useSyncExternalStore(" \
+  'const STORY_STORAGE_KEY = "currentStory";' \
+  "getServerStorySnapshot" \
+  "storyData === undefined"; do
+  if ! grep -Fq "$story_storage_contract" "$story_page"; then
+    printf '%s\n' "Story page must preserve the hydration-safe storage contract: $story_storage_contract" >&2
+    exit 1
+  fi
+done
+if grep -Fq "setStory(" "$story_page" || grep -Fq "setIsLoading(" "$story_page"; then
+  printf '%s\n' "Story storage must not restore synchronous effect state updates." >&2
+  exit 1
+fi
+
+next16_guidance='The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.'
+for next16_guidance_path in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "$next16_guidance" "$ROOT_DIR/$next16_guidance_path"; then
+    printf '%s\n' "$next16_guidance_path must document the Next.js 16 runtime boundary." >&2
+    exit 1
+  fi
+done
+
+for next16_plan_contract in \
+  'Status: Completed' \
+  'Next.js and `eslint-config-next` 16.2.9' \
+  'repository-root and external-directory `make check`' \
+  'hostile mutations' \
+  'No live Modal, Poe, Hugging Face, or billable generation request was performed'; do
+  if ! grep -Fq "$next16_plan_contract" "$NEXT16_PLAN"; then
+    printf '%s\n' "Next.js 16 plan must keep completion evidence: $next16_plan_contract" >&2
+    exit 1
+  fi
+done
 if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "def _metadata_string_list" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "must be a non-empty list" "$ROOT_DIR/src/huggingface_uploader.py" ||

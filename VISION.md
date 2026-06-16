@@ -70,6 +70,7 @@ Current baseline:
   return immediately when the configured retry budget is exhausted.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - GitHub Actions runs the offline Python baseline and clean frontend
   lint/build/audit checks across active Python and Node releases without
   persisting checkout credentials.

@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-16
+
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
+- Story storage now uses React's external-store contract so hydration does not
+  rely on synchronous state updates inside an effect.
+
 ## 2026-06-15
 
 - Replaced the five raw home-page images with dimensioned Next.js image

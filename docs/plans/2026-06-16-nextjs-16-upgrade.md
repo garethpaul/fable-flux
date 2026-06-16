@@ -1,6 +1,6 @@
 # Next.js 16 Frontend Upgrade
 
-## Status: Planned
+## Status: Completed
 
 ## Priority
 
@@ -64,3 +64,22 @@ without narrowing the supported matrix.
 
 - [Next.js 16 upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
 - [Next.js 16.2 release](https://nextjs.org/blog/next-16-2)
+
+## Verification Completed
+
+- Next.js and `eslint-config-next` 16.2.9 install together from the committed
+  lockfile with React and React DOM remaining at 19.2.7.
+- Native flat ESLint configuration passed after removing the legacy
+  compatibility adapter. The upgraded rules also identified and eliminated a
+  synchronous effect-state update in browser story storage.
+- The Next.js 16 production Turbopack build passed with supported scripts,
+  generated route types, and the React automatic JSX runtime.
+- `npm audit --audit-level=moderate` reported zero vulnerabilities.
+- Repository-root and external-directory `make check` passed the 32-test
+  backend gate plus frontend lint under the upgraded dependency tree.
+- Seven isolated hostile mutations were rejected across framework and ESLint
+  versions, the Node floor, build scripts, storage hydration, guidance, and
+  completed-plan evidence.
+- Exact diff, generated artifact, credential, conflict, mode, binary, size, and
+  whitespace audits passed.
+- No live Modal, Poe, Hugging Face, or billable generation request was performed.
