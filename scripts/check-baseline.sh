@@ -589,6 +589,9 @@ for next16_plan_contract in \
   'Next.js and `eslint-config-next` 16.2.9' \
   'repository-root and external-directory `make check`' \
   'hostile mutations' \
+  'f14af831dd21375c8d33e5c79827b67c2eaea57b' \
+  'push run `27621705155`' \
+  'pull-request run `27621725768`' \
   'No live Modal, Poe, Hugging Face, or billable generation request was performed'; do
   if ! grep -Fq "$next16_plan_contract" "$NEXT16_PLAN"; then
     printf '%s\n' "Next.js 16 plan must keep completion evidence: $next16_plan_contract" >&2

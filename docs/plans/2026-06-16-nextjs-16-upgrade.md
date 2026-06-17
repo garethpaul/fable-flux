@@ -82,4 +82,11 @@ without narrowing the supported matrix.
   completed-plan evidence.
 - Exact diff, generated artifact, credential, conflict, mode, binary, size, and
   whitespace audits passed.
+- The implementation was committed as
+  `f14af831dd21375c8d33e5c79827b67c2eaea57b`.
+- Canonical hosted verification passed on that exact implementation head:
+  push run `27621705155` and pull-request run `27621725768` each completed
+  successfully across Python 3.10, 3.12, and 3.14 and frontend Node.js 20, 22,
+  and 24. PR #14 remained open, clean, and mergeable, and the branch had no open
+  code-scanning alerts.
 - No live Modal, Poe, Hugging Face, or billable generation request was performed.
