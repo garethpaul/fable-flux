@@ -23,6 +23,7 @@ CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.m
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
 HOME_IMAGE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-home-next-image.md"
 NEXT16_PLAN="$ROOT_DIR/docs/plans/2026-06-16-nextjs-16-upgrade.md"
+AIOHTTP_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
 HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
@@ -94,6 +95,7 @@ for path in \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
   "docs/plans/2026-06-15-home-next-image.md" \
   "docs/plans/2026-06-16-nextjs-16-upgrade.md" \
+  "docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md" \
   "scripts/check-poe-response-body-boundary.py" \
   "scripts/check-home-next-image.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
@@ -378,7 +380,8 @@ if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$
   grep -Fq "ubuntu-latest" "$workflow" ||
   ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
-  ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
+  ! grep -Fq "python -m pip install -r requirements-ci.txt pip-audit==2.10.0" "$workflow" ||
+  ! grep -Fq "python -m pip_audit -r requirements-ci.txt" "$workflow" ||
   ! grep -Fq "run: make check" "$workflow" ||
   ! grep -Fq "run: npm ci" "$workflow" ||
   ! grep -Fq "run: npm run lint" "$workflow" ||
@@ -501,10 +504,33 @@ if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; th
 fi
 
 if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
-  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  ! grep -Fxq "aiohttp==3.14.1" "$ROOT_DIR/requirements-ci.txt"; then
   printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
   exit 1
 fi
+
+if ! grep -Fxq "aiohttp>=3.14.1" "$ROOT_DIR/requirements.txt" ||
+  ! grep -Fq "aiohttp>=3.14.1" "$ROOT_DIR/setup.py" ||
+  grep -Fq "aiohttp>=3.8.0" "$ROOT_DIR/setup.py"; then
+  printf '%s\n' "Runtime dependency guidance must reject vulnerable aiohttp releases." >&2
+  exit 1
+fi
+
+for aiohttp_plan_contract in \
+  'Status: Completed' \
+  'aiohttp 3.14.1' \
+  'eight open advisories' \
+  'Verification Completed' \
+  'exact dependency audit reported no known vulnerabilities' \
+  'All 32 backend tests passed' \
+  'complete repository and external-working-directory `make check` gates' \
+  'Six isolated hostile mutations were rejected' \
+  'Hosted push and pull-request verification remains pending'; do
+  if ! grep -Fq "$aiohttp_plan_contract" "$AIOHTTP_SECURITY_PLAN"; then
+    printf '%s\n' "aiohttp security plan must keep completion evidence: $aiohttp_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
   ! grep -Fq '"react-dom": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
