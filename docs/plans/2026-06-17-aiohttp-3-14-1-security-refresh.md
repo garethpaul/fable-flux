@@ -104,5 +104,9 @@ Test scenarios:
   no-vulnerability evidence.
 - Exact diff, generated-artifact, credential, mode, conflict-marker, and
   whitespace audits passed before the implementation commit.
-- Hosted push and pull-request verification remains pending until the exact
-  implementation commit is pushed; no alert dismissal or suppression is used.
+- Hosted push run `27709947843` and pull-request run `27709983810` passed all
+  12 Python and frontend matrix jobs at implementation head
+  `5602a07d51813644d90ef7a86393a31ce827db7e`.
+- The eight aiohttp Dependabot alerts remain open against the default branch
+  until the stacked remediation is integrated; the exact branch audit is
+  clean, and no alert dismissal or suppression is used.

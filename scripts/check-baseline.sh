@@ -525,12 +525,21 @@ for aiohttp_plan_contract in \
   'All 32 backend tests passed' \
   'complete repository and external-working-directory `make check` gates' \
   'Six isolated hostile mutations were rejected' \
-  'Hosted push and pull-request verification remains pending'; do
+  'Hosted push run `27709947843` and pull-request run `27709983810` passed all' \
+  '12 Python and frontend matrix jobs at implementation head' \
+  '`5602a07d51813644d90ef7a86393a31ce827db7e`' \
+  'eight aiohttp Dependabot alerts remain open against the default branch' \
+  'no alert dismissal or suppression is used'; do
   if ! grep -Fq "$aiohttp_plan_contract" "$AIOHTTP_SECURITY_PLAN"; then
     printf '%s\n' "aiohttp security plan must keep completion evidence: $aiohttp_plan_contract" >&2
     exit 1
   fi
 done
+
+if grep -Fq 'Hosted push and pull-request verification remains pending' "$AIOHTTP_SECURITY_PLAN"; then
+  printf '%s\n' "aiohttp security plan must not retain stale pending hosted evidence." >&2
+  exit 1
+fi
 
 if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
   ! grep -Fq '"react-dom": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
