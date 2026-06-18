@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-18
+
+- Refreshed the compatible frontend lockfile to Tailwind CSS 4.3.1 and the
+  latest Node 20 type definitions while preserving all framework and major
+  version boundaries.
+
 ## 2026-06-16
 
 - The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.

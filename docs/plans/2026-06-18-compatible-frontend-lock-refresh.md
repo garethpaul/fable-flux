@@ -1,6 +1,6 @@
 # Compatible Frontend Lock Refresh
 
-## Status: Planned
+## Status: Completed
 
 ## Priority
 
@@ -88,3 +88,20 @@ Test scenarios:
 - Repository, external-directory, push, and pull-request gates pass without
   weakening coverage.
 - Dependency audits report no known moderate-or-higher npm vulnerabilities.
+
+## Verification Completed
+
+- Clean lockfile installs on Node 20.19.5, 22.22.2, and 24.16.0 resolved
+  Tailwind CSS and `@tailwindcss/postcss` 4.3.1 plus `@types/node` 20.19.43.
+- Frontend lint and the Next.js 16.2.9 production build passed on Node 20, 22,
+  and 24.
+- The moderate-severity npm audit reported zero vulnerabilities on each
+  supported Node runtime.
+- The baseline's 32 backend tests passed with the refreshed lockfile and
+  structured dependency contract in place.
+- Repository-root and external-directory `make check` passed, including all
+  32 backend tests and the installed frontend lint gate.
+- Ten isolated hostile mutations were rejected across the Tailwind PostCSS,
+  Tailwind CSS, Tailwind node/oxide core, Node type, platform version,
+  complete platform set, manifest-major, plan status, and completed
+  audit-evidence contracts.
