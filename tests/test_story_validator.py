@@ -118,6 +118,24 @@ The End."""
         self.assertFalse(is_valid)
         self.assertTrue(any("Invalid story type" in error for error in results["errors"]))
 
+    def test_validate_story_rejects_invalid_scalar_metadata_types(self):
+        replacements = {
+            "id: story_1": "id: [story_1]",
+            "setting: garden": "setting: [garden]",
+            "words: 58": "words: false",
+        }
+
+        for original, replacement in replacements.items():
+            with self.subTest(replacement=replacement):
+                content = story_with_body(
+                    "Milo and friends learn kindness together. " * 12
+                ).replace(original, replacement)
+
+                is_valid, results = self.validator().validate_story(content)
+
+                self.assertFalse(is_valid)
+                self.assertTrue(results["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

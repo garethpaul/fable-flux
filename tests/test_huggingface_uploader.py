@@ -86,6 +86,50 @@ The End.""")
 
         self.assertIsNone(StoryParser().parse_story_file(path))
 
+    def test_parse_story_file_rejects_invalid_scalar_metadata_types(self):
+        replacements = {
+            "id: story_1": "id: [story_1]",
+            "setting: garden": "setting: [garden]",
+            "words: 12": "words: false",
+        }
+
+        for original, replacement in replacements.items():
+            with self.subTest(replacement=replacement):
+                path = self.write_story("""---
+id: story_1
+type: daily_adventure
+characters: ["Milo"]
+setting: garden
+words: 12
+tags: ["kindness"]
+---
+
+# Milo Shares
+
+Milo shared a pail with a friend.
+
+The End.""".replace(original, replacement))
+
+                self.assertIsNone(StoryParser().parse_story_file(path))
+
+    def test_parse_story_file_rejects_invalid_story_type(self):
+        path = self.write_story("""---
+id: story_1
+type: scary_tale
+characters: ["Milo"]
+setting: garden
+words: 12
+tags: ["kindness"]
+---
+
+# Milo Shares
+
+Milo shared a pail with a friend.
+
+The End.""")
+
+        self.assertIsNone(StoryParser().parse_story_file(path))
+
 
 if __name__ == "__main__":
     unittest.main()
