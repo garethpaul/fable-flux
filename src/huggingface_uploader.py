@@ -57,7 +57,14 @@ class StoryParser:
 
             characters = self._metadata_string_list(metadata, "characters", file_path)
             tags = self._metadata_string_list(metadata, "tags", file_path)
-            if characters is None or tags is None:
+            story_id = self._metadata_non_empty_string(metadata, "id", file_path)
+            story_type = self._metadata_non_empty_string(metadata, "type", file_path)
+            setting = self._metadata_non_empty_string(metadata, "setting", file_path)
+            word_count = self._metadata_positive_int(metadata, "words", file_path)
+            if None in (characters, tags, story_id, story_type, setting, word_count):
+                return None
+            if story_type not in ("problem_solution", "daily_adventure"):
+                logging.warning(f"Frontmatter type in {file_path} is not a supported story type")
                 return None
             
             # Clean and extract story text
@@ -65,13 +72,13 @@ class StoryParser:
             
             # Create structured record
             record = {
-                "id": metadata.get("id", file_path.stem),
+                "id": story_id,
                 "title": self._extract_title(story_content),
                 "text": story_text,
-                "type": metadata.get("type", "unknown"),
+                "type": story_type,
                 "characters": characters,
-                "setting": metadata.get("setting", ""),
-                "word_count": metadata.get("words", len(story_text.split())),
+                "setting": setting,
+                "word_count": word_count,
                 "tags": tags,
                 "source_file": str(file_path.name),
                 "created_at": datetime.now().isoformat()
@@ -98,6 +105,20 @@ class StoryParser:
             normalized.append(value.strip())
 
         return normalized
+
+    def _metadata_non_empty_string(self, metadata: Dict[str, Any], field: str, file_path: Path) -> Optional[str]:
+        value = metadata.get(field)
+        if not isinstance(value, str) or not value.strip():
+            logging.warning(f"Frontmatter {field} in {file_path} must be a non-empty string")
+            return None
+        return value.strip()
+
+    def _metadata_positive_int(self, metadata: Dict[str, Any], field: str, file_path: Path) -> Optional[int]:
+        value = metadata.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            logging.warning(f"Frontmatter {field} in {file_path} must be a positive integer")
+            return None
+        return value
     
     def _extract_title(self, content: str) -> str:
         """Extract title from markdown content"""

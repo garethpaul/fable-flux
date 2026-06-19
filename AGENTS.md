@@ -52,10 +52,12 @@ Fable Flux is an AI-assisted educational story pipeline. The repository contains
 - Keep Poe validation and generation response reads within the shared 1 MiB
   decompressed-byte limit and decode accepted bodies as strict UTF-8.
 - Story and uploader frontmatter must remain mappings, and `characters` and `tags` must remain non-empty lists of non-empty strings before validation or publishing.
+- Story `type` must remain `problem_solution` or `daily_adventure`, `id` and `setting` metadata must remain non-empty strings, and `words` must remain a positive integer rather than a YAML boolean before validation or publishing.
 - Poe rate limits must stay positive and recheck token state after sleeping. Retries must sleep once per actual retry and return immediately after the retry budget is exhausted.
 - The frontend proxy must use server-side environment configuration, require an HTTPS Modal endpoint with a hostname, bound prompt length, and avoid raw generated-content logs.
 - The Modal proxy rejects HTTP redirects; preserve `redirect: "error"` on server-side story requests.
 - Keep generated Modal output and stored stories behind the shared runtime shape guard before API success or React rendering.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - Treat `data/stories`, `output`, and `logs` as potentially sensitive generated content. Do not commit new generated stories or runtime logs during maintenance work.
 - Follow `docs/publishing-serving-ownership.md` before any Hugging Face publication or Modal deployment. Preserve explicit owner/reviewer evidence, provenance, safety/privacy review, least-privilege secret storage, rollback, and incident rotation boundaries; offline CI does not authorize a release.
 
