@@ -19,21 +19,17 @@ STORY_RESPONSE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-story-response-shape-valida
 LOCATION_INDEPENDENT_MAKE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-location-independent-make.md"
 MODAL_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-redirect-boundary.md"
 MODAL_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-modal-response-body-boundary.md"
+CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.md"
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
+HOME_IMAGE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-home-next-image.md"
+NEXT16_PLAN="$ROOT_DIR/docs/plans/2026-06-16-nextjs-16-upgrade.md"
+AIOHTTP_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md"
+COMPATIBLE_FRONTEND_LOCK_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-frontend-lock-refresh.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
+HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
+HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
-
-cleanup_bytecode() {
-  for artifact_dir in "$ROOT_DIR/__pycache__" "$ROOT_DIR/src/__pycache__" "$ROOT_DIR/tests/__pycache__"; do
-    if [ -d "$artifact_dir" ]; then
-      rm -rf -- "$artifact_dir"
-    fi
-  done
-}
-
-trap cleanup_bytecode EXIT
-cleanup_bytecode
 
 require_file() {
   path=$1
@@ -58,10 +54,14 @@ for path in \
   "data/settings.json" \
   "data/tags.json" \
   "front-end/.env.local.example" \
+  "front-end/eslint.config.mjs" \
+  "front-end/next-env.d.ts" \
   "front-end/package-lock.json" \
   "front-end/package.json" \
   "front-end/src/app/api/chat/completions/route.ts" \
+  "front-end/src/app/page.tsx" \
   "front-end/src/app/story/StoryPageClient.tsx" \
+  "front-end/tsconfig.json" \
   "front-end/src/types/story.ts" \
   "docs/publishing-serving-ownership.md" \
   "generate_stories.py" \
@@ -92,14 +92,21 @@ for path in \
   "docs/plans/2026-06-13-story-response-shape-validation.md" \
   "docs/plans/2026-06-13-location-independent-make.md" \
   "docs/plans/2026-06-14-modal-redirect-boundary.md" \
+  "docs/plans/2026-06-14-client-request-body-boundary.md" \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
+  "docs/plans/2026-06-15-home-next-image.md" \
+  "docs/plans/2026-06-16-nextjs-16-upgrade.md" \
+  "docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md" \
+  "docs/plans/2026-06-18-compatible-frontend-lock-refresh.md" \
   "scripts/check-poe-response-body-boundary.py" \
+  "scripts/check-home-next-image.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
 done
 
 python3 "$POE_RESPONSE_BODY_CHECK" "$ROOT_DIR/src/poe_client.py" "$ROOT_DIR/tests/test_poe_client.py"
+"$PYTHON" "$HOME_IMAGE_CHECK" "$HOME_PAGE" "$HOME_IMAGE_PLAN"
 
 if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$ROOT_DIR/Makefile" ||
   ! grep -Fq '"$(ROOT)/scripts/check-baseline.sh"' "$ROOT_DIR/Makefile"; then
@@ -375,7 +382,8 @@ if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$
   grep -Fq "ubuntu-latest" "$workflow" ||
   ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
-  ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
+  ! grep -Fq "python -m pip install -r requirements-ci.txt pip-audit==2.10.0" "$workflow" ||
+  ! grep -Fq "python -m pip_audit -r requirements-ci.txt" "$workflow" ||
   ! grep -Fq "run: make check" "$workflow" ||
   ! grep -Fq "run: npm ci" "$workflow" ||
   ! grep -Fq "run: npm run lint" "$workflow" ||
@@ -498,8 +506,40 @@ if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; th
 fi
 
 if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
-  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  ! grep -Fxq "aiohttp==3.14.1" "$ROOT_DIR/requirements-ci.txt"; then
   printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
+  exit 1
+fi
+
+if ! grep -Fxq "aiohttp>=3.14.1" "$ROOT_DIR/requirements.txt" ||
+  ! grep -Fq "aiohttp>=3.14.1" "$ROOT_DIR/setup.py" ||
+  grep -Fq "aiohttp>=3.8.0" "$ROOT_DIR/setup.py"; then
+  printf '%s\n' "Runtime dependency guidance must reject vulnerable aiohttp releases." >&2
+  exit 1
+fi
+
+for aiohttp_plan_contract in \
+  'Status: Completed' \
+  'aiohttp 3.14.1' \
+  'eight open advisories' \
+  'Verification Completed' \
+  'exact dependency audit reported no known vulnerabilities' \
+  'All 32 backend tests passed' \
+  'complete repository and external-working-directory `make check` gates' \
+  'Six isolated hostile mutations were rejected' \
+  'Hosted push run `27709947843` and pull-request run `27709983810` passed all' \
+  '12 Python and frontend matrix jobs at implementation head' \
+  '`5602a07d51813644d90ef7a86393a31ce827db7e`' \
+  'eight aiohttp Dependabot alerts remain open against the default branch' \
+  'no alert dismissal or suppression is used'; do
+  if ! grep -Fq "$aiohttp_plan_contract" "$AIOHTTP_SECURITY_PLAN"; then
+    printf '%s\n' "aiohttp security plan must keep completion evidence: $aiohttp_plan_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'Hosted push and pull-request verification remains pending' "$AIOHTTP_SECURITY_PLAN"; then
+  printf '%s\n' "aiohttp security plan must not retain stale pending hosted evidence." >&2
   exit 1
 fi
 
@@ -509,6 +549,143 @@ if ! grep -Fq '"react": "19.2.7"' "$ROOT_DIR/front-end/package.json" ||
   printf '%s\n' "Frontend React and audit contracts must remain pinned." >&2
   exit 1
 fi
+
+"$PYTHON" - "$ROOT_DIR/front-end/package.json" "$ROOT_DIR/front-end/package-lock.json" <<'PY'
+import json
+import sys
+
+package_path, lock_path = sys.argv[1:]
+package = json.load(open(package_path, encoding="utf-8"))
+lock = json.load(open(lock_path, encoding="utf-8"))
+root = lock.get("packages", {}).get("", {})
+installed = lock.get("packages", {})
+
+expected = "16.2.9"
+checks = {
+    "package Next.js": package.get("dependencies", {}).get("next") == expected,
+    "package ESLint config": package.get("devDependencies", {}).get("eslint-config-next") == expected,
+    "lock root Next.js": root.get("dependencies", {}).get("next") == expected,
+    "lock root ESLint config": root.get("devDependencies", {}).get("eslint-config-next") == expected,
+    "installed Next.js": installed.get("node_modules/next", {}).get("version") == expected,
+    "installed ESLint config": installed.get("node_modules/eslint-config-next", {}).get("version") == expected,
+    "Node runtime floor": package.get("engines", {}).get("node") == ">=20.9.0",
+    "development script": package.get("scripts", {}).get("dev") == "next dev",
+    "production build script": package.get("scripts", {}).get("build") == "next build",
+    "legacy direct ESLint adapter removed": "@eslint/eslintrc" not in package.get("devDependencies", {}),
+}
+
+failed = [name for name, passed in checks.items() if not passed]
+if failed:
+    raise SystemExit("Next.js 16 package contract failed: " + ", ".join(failed))
+
+compatible_checks = {
+    "package Tailwind PostCSS major": package.get("devDependencies", {}).get("@tailwindcss/postcss") == "^4",
+    "package Tailwind major": package.get("devDependencies", {}).get("tailwindcss") == "^4",
+    "package Node types major": package.get("devDependencies", {}).get("@types/node") == "^20",
+    "lock root Tailwind PostCSS major": root.get("devDependencies", {}).get("@tailwindcss/postcss") == "^4",
+    "lock root Tailwind major": root.get("devDependencies", {}).get("tailwindcss") == "^4",
+    "lock root Node types major": root.get("devDependencies", {}).get("@types/node") == "^20",
+    "installed Tailwind PostCSS": installed.get("node_modules/@tailwindcss/postcss", {}).get("version") == "4.3.1",
+    "installed Tailwind node": installed.get("node_modules/@tailwindcss/node", {}).get("version") == "4.3.1",
+    "installed Tailwind oxide": installed.get("node_modules/@tailwindcss/oxide", {}).get("version") == "4.3.1",
+    "installed Tailwind": installed.get("node_modules/tailwindcss", {}).get("version") == "4.3.1",
+    "installed Node types": installed.get("node_modules/@types/node", {}).get("version") == "20.19.43",
+}
+expected_oxide_packages = {
+    "node_modules/@tailwindcss/oxide-android-arm64",
+    "node_modules/@tailwindcss/oxide-darwin-arm64",
+    "node_modules/@tailwindcss/oxide-darwin-x64",
+    "node_modules/@tailwindcss/oxide-freebsd-x64",
+    "node_modules/@tailwindcss/oxide-linux-arm-gnueabihf",
+    "node_modules/@tailwindcss/oxide-linux-arm64-gnu",
+    "node_modules/@tailwindcss/oxide-linux-arm64-musl",
+    "node_modules/@tailwindcss/oxide-linux-x64-gnu",
+    "node_modules/@tailwindcss/oxide-linux-x64-musl",
+    "node_modules/@tailwindcss/oxide-wasm32-wasi",
+    "node_modules/@tailwindcss/oxide-win32-arm64-msvc",
+    "node_modules/@tailwindcss/oxide-win32-x64-msvc",
+}
+oxide_packages = {
+    path: details.get("version")
+    for path, details in installed.items()
+    if path.startswith("node_modules/@tailwindcss/oxide-") and path.count("/") == 2
+}
+compatible_checks["Tailwind platform package set"] = set(oxide_packages) == expected_oxide_packages
+compatible_checks["Tailwind platform package versions"] = set(oxide_packages.values()) == {"4.3.1"}
+
+failed = [name for name, passed in compatible_checks.items() if not passed]
+if failed:
+    raise SystemExit("Compatible frontend lock contract failed: " + ", ".join(failed))
+PY
+
+for compatible_lock_plan_contract in \
+  'Status: Completed' \
+  'Tailwind CSS and `@tailwindcss/postcss` 4.3.1' \
+  '`@types/node` 20.19.43' \
+  'Clean lockfile installs on Node 20.19.5, 22.22.2, and 24.16.0 resolved' \
+  'The moderate-severity npm audit reported zero vulnerabilities on each'; do
+  if ! grep -Fq "$compatible_lock_plan_contract" "$COMPATIBLE_FRONTEND_LOCK_PLAN"; then
+    printf '%s\n' "Compatible frontend lock plan must keep completion evidence: $compatible_lock_plan_contract" >&2
+    exit 1
+  fi
+done
+
+eslint_config="$ROOT_DIR/front-end/eslint.config.mjs"
+for eslint_contract in \
+  'import { defineConfig, globalIgnores } from "eslint/config";' \
+  'import nextVitals from "eslint-config-next/core-web-vitals";' \
+  'import nextTs from "eslint-config-next/typescript";' \
+  '...nextVitals' \
+  '...nextTs'; do
+  if ! grep -Fq "$eslint_contract" "$eslint_config"; then
+    printf '%s\n' "Frontend must use native Next.js 16 flat ESLint configuration: $eslint_contract" >&2
+    exit 1
+  fi
+done
+if grep -Fq "FlatCompat" "$eslint_config"; then
+  printf '%s\n' "Frontend must not restore the legacy ESLint compatibility adapter." >&2
+  exit 1
+fi
+
+story_page="$ROOT_DIR/front-end/src/app/story/StoryPageClient.tsx"
+for story_storage_contract in \
+  'import { useEffect, useMemo, useSyncExternalStore } from "react";' \
+  "const storyData = useSyncExternalStore(" \
+  'const STORY_STORAGE_KEY = "currentStory";' \
+  "getServerStorySnapshot" \
+  "storyData === undefined"; do
+  if ! grep -Fq "$story_storage_contract" "$story_page"; then
+    printf '%s\n' "Story page must preserve the hydration-safe storage contract: $story_storage_contract" >&2
+    exit 1
+  fi
+done
+if grep -Fq "setStory(" "$story_page" || grep -Fq "setIsLoading(" "$story_page"; then
+  printf '%s\n' "Story storage must not restore synchronous effect state updates." >&2
+  exit 1
+fi
+
+next16_guidance='The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.'
+for next16_guidance_path in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "$next16_guidance" "$ROOT_DIR/$next16_guidance_path"; then
+    printf '%s\n' "$next16_guidance_path must document the Next.js 16 runtime boundary." >&2
+    exit 1
+  fi
+done
+
+for next16_plan_contract in \
+  'Status: Completed' \
+  'Next.js and `eslint-config-next` 16.2.9' \
+  'repository-root and external-directory `make check`' \
+  'hostile mutations' \
+  'f14af831dd21375c8d33e5c79827b67c2eaea57b' \
+  'push run `27621705155`' \
+  'pull-request run `27621725768`' \
+  'No live Modal, Poe, Hugging Face, or billable generation request was performed'; do
+  if ! grep -Fq "$next16_plan_contract" "$NEXT16_PLAN"; then
+    printf '%s\n' "Next.js 16 plan must keep completion evidence: $next16_plan_contract" >&2
+    exit 1
+  fi
+done
 if ! grep -Fq "isinstance(metadata, dict)" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "def _metadata_string_list" "$ROOT_DIR/src/huggingface_uploader.py" ||
   ! grep -Fq "must be a non-empty list" "$ROOT_DIR/src/huggingface_uploader.py" ||
@@ -637,7 +814,64 @@ if -1 in (fetch_start, signal, redirect, headers, response_check, content_type_c
     fetch_start < signal < redirect < headers < response_check < content_type_check < body_parse < timeout_handler < gateway_timeout
 ):
     raise SystemExit("Modal timeout, redirect, status, JSON media type, body parse, and 504 handling must remain in request order")
+
+request_media_type = source.find('if (!hasJsonContentType(request.headers.get("content-type")))')
+request_reader = source.find("requestData = await readBoundedJsonRequest(request)", request_media_type)
+prompt_read = source.find("const prompt =", request_reader)
+config_read = source.find("const apiKey = process.env.MODAL_API_KEY", prompt_read)
+if -1 in (request_media_type, request_reader, prompt_read, config_read) or not (
+    request_media_type < request_reader < prompt_read < config_read < fetch_start
+):
+    raise SystemExit("Client media type, bounded body read, prompt validation, configuration, and Modal dispatch must remain ordered")
+
+request_helper = source.split("async function readBoundedJsonRequest", 1)[1].split("async function readBoundedJsonResponse", 1)[0]
+request_helper_contracts = [
+    'request.headers.get("content-length")',
+    "declaredBytes > CLIENT_REQUEST_MAX_BYTES",
+    "request.body.getReader()",
+    "totalBytes > CLIENT_REQUEST_MAX_BYTES",
+    "await reader.cancel()",
+    'new TextDecoder("utf-8", { fatal: true })',
+]
+if any(contract not in request_helper for contract in request_helper_contracts):
+    raise SystemExit("Client request helper must enforce declared and streamed byte limits with cancellation and strict UTF-8")
 PY
+
+for client_body_contract in \
+  "const CLIENT_REQUEST_MAX_BYTES = 4 * 1024" \
+  "async function readBoundedJsonRequest(request: NextRequest)" \
+  'request.headers.get("content-length")' \
+  "declaredBytes > CLIENT_REQUEST_MAX_BYTES" \
+  "request.body.getReader()" \
+  "totalBytes > CLIENT_REQUEST_MAX_BYTES" \
+  "await reader.cancel()" \
+  'new TextDecoder("utf-8", { fatal: true })' \
+  '{ status: 415 }' \
+  'Request body must be valid JSON within 4 KiB'; do
+  if ! grep -Fq "$client_body_contract" "$route"; then
+    printf '%s\n' "Client request body contract is missing: $client_body_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq "await request.json()" "$route"; then
+  printf '%s\n' "Client request JSON must not be buffered without the byte boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CLIENT_BODY_PLAN" ||
+  ! grep -Fq "make check" "$CLIENT_BODY_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$CLIENT_BODY_PLAN"; then
+  printf '%s\n' "Client request body plan must record completed verification." >&2
+  exit 1
+fi
+
+for document in "$ROOT_DIR/README.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq "bounds client JSON requests to 4 KiB of strict UTF-8" "$document"; then
+    printf '%s\n' "$document must document the client request body boundary." >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "status: completed" "$MODAL_REDIRECT_PLAN" ||
   ! grep -Fq "make check" "$MODAL_REDIRECT_PLAN" ||

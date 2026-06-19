@@ -48,6 +48,8 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - Modal generation requests have a 30-second server-side deadline and generic
   timeout failures.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or Modal configuration access.
 - The Modal proxy rejects HTTP redirects after validating the configured HTTPS
   endpoint.
 - Successful Modal responses are parsed only after an `application/json`
@@ -68,6 +70,7 @@ Current baseline:
   return immediately when the configured retry budget is exhausted.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - GitHub Actions runs the offline Python baseline and clean frontend
   lint/build/audit checks across active Python and Node releases without
   persisting checkout credentials.
