@@ -2,6 +2,9 @@
 
 ## 2026-06-18
 
+- Rejected unsupported story types, non-string identifiers and settings, plus
+  non-positive or boolean word counts before validation or Hugging Face record
+  creation.
 - Refreshed the compatible frontend lockfile to Tailwind CSS 4.3.1 and the
   latest Node 20 type definitions while preserving all framework and major
   version boundaries.
