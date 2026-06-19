@@ -1,5 +1,25 @@
 # Changes
 
+## 2026-06-18
+
+- Rejected unsupported story types, non-string identifiers and settings, plus
+  non-positive or boolean word counts before validation or Hugging Face record
+  creation.
+- Refreshed the compatible frontend lockfile to Tailwind CSS 4.3.1 and the
+  latest Node 20 type definitions while preserving all framework and major
+  version boundaries.
+
+## 2026-06-16
+
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
+- Story storage now uses React's external-store contract so hydration does not
+  rely on synchronous state updates inside an effect.
+
+## 2026-06-15
+
+- Replaced the five raw home-page images with dimensioned Next.js image
+  components, eliminating the maintained frontend image lint warnings.
+
 ## 2026-06-14
 
 - The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.

@@ -138,6 +138,7 @@ on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
 clean frontend installs, linting, production builds, and moderate-severity npm
 audits. Actions are pinned by commit, repository access is read-only, and
 checkout credentials are not persisted in either job.
+The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 Both hosted matrices run on explicit Ubuntu 24.04 rather than a moving
 `ubuntu-latest` image.
 

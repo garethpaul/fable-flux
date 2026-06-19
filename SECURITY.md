@@ -35,6 +35,9 @@ Helpful reports include:
 - Story validation and dataset upload parsing should reject malformed story
   frontmatter and keep list-typed metadata as non-empty string lists before
   quality checks or JSONL publishing.
+- Story validation and dataset upload parsing should reject unsupported story
+  types, non-string `id` or `setting` values, and non-positive or boolean
+  `words` values before JSONL publishing.
 - Poe model validation response bodies should be omitted from logs and
   summarized by length instead.
 - Poe model validation should fail closed for every response except HTTP 200;
@@ -63,6 +66,7 @@ Helpful reports include:
   frontend lint/build, and moderate npm audit without persisting checkout
   credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or
   generated-story uploads.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - Keep both jobs on the explicit Ubuntu 24.04 image until a separately reviewed
   runner migration validates every matrix entry.
 - Hugging Face publication and Modal deployment require the role, approval,
