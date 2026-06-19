@@ -3,6 +3,8 @@ import { isStoryResponse, ApiError } from "@/types/story";
 
 const DEFAULT_MODAL_MODEL = "garethpaul/gpt-oss-20b-fableflux-mxfp4";
 const MODAL_REQUEST_TIMEOUT_MS = 30_000;
+const CLIENT_REQUEST_MAX_BYTES = 4 * 1024;
+const MODAL_RESPONSE_MAX_BYTES = 1024 * 1024;
 
 function parseModalApiUrl(rawUrl: string | undefined): URL | null {
   if (!rawUrl) {
@@ -26,9 +28,119 @@ function hasJsonContentType(value: string | null): boolean {
   return mediaType === "application/json";
 }
 
+async function readBoundedJsonRequest(request: NextRequest): Promise<unknown> {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null) {
+    const declaredBytes = Number(contentLength);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes < 0) {
+      throw new Error("Client request Content-Length is invalid");
+    }
+    if (declaredBytes > CLIENT_REQUEST_MAX_BYTES) {
+      throw new Error("Client request body is too large");
+    }
+  }
+
+  if (!request.body) {
+    throw new Error("Client request body is missing");
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > CLIENT_REQUEST_MAX_BYTES) {
+      await reader.cancel();
+      throw new Error("Client request body is too large");
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(body));
+}
+
+async function readBoundedJsonResponse(response: Response): Promise<unknown> {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength !== null) {
+    const declaredBytes = Number(contentLength);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes < 0) {
+      throw new Error("Modal response Content-Length is invalid");
+    }
+    if (declaredBytes > MODAL_RESPONSE_MAX_BYTES) {
+      throw new Error("Modal response body is too large");
+    }
+  }
+
+  if (!response.body) {
+    throw new Error("Modal response body is missing");
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MODAL_RESPONSE_MAX_BYTES) {
+      await reader.cancel();
+      throw new Error("Modal response body is too large");
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(body));
+}
+
+function storyContentFromModalResponse(value: unknown): string | null {
+  if (value === null || typeof value !== "object") return null;
+  const choices = (value as Record<string, unknown>).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+  const firstChoice = choices[0];
+  if (firstChoice === null || typeof firstChoice !== "object") return null;
+  const message = (firstChoice as Record<string, unknown>).message;
+  if (message === null || typeof message !== "object") return null;
+  const content = (message as Record<string, unknown>).content;
+  return typeof content === "string" && content.length > 0 ? content : null;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json();
+    if (!hasJsonContentType(request.headers.get("content-type"))) {
+      return NextResponse.json(
+        { error: "Content-Type must be application/json" } as ApiError,
+        { status: 415 }
+      );
+    }
+
+    let requestData: unknown;
+    try {
+      requestData = await readBoundedJsonRequest(request);
+    } catch {
+      return NextResponse.json(
+        { error: "Request body must be valid JSON within 4 KiB" } as ApiError,
+        { status: 400 }
+      );
+    }
+
+    const prompt =
+      requestData !== null && typeof requestData === "object"
+        ? (requestData as Record<string, unknown>).prompt
+        : undefined;
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
@@ -120,10 +232,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const modalData = await modalResponse.json();
+    const modalData = await readBoundedJsonResponse(modalResponse);
 
     // Extract the story content from Modal's response
-    const storyContent = modalData.choices?.[0]?.message?.content;
+    const storyContent = storyContentFromModalResponse(modalData);
 
     if (!storyContent) {
       console.error("No content in Modal response");
