@@ -265,7 +265,7 @@ if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$work
 fi
 
 if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
-  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  ! grep -Fxq "aiohttp==3.14.1" "$ROOT_DIR/requirements-ci.txt"; then
   printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
   exit 1
 fi
