@@ -79,7 +79,7 @@ MODAL_MODEL=garethpaul/gpt-oss-20b-fableflux-mxfp4
 def create_requirements():
     """Create requirements.txt file"""
     requirements = """# Core dependencies
-aiohttp>=3.8.0
+aiohttp>=3.14.1
 aiofiles>=0.8.0
 PyYAML>=6.0
 
