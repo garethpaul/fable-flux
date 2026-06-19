@@ -156,9 +156,13 @@ class StoryValidator:
                 errors.append(f"Missing required field: {field}")
                 
         # Validate specific fields
+        if 'id' in frontmatter:
+            if not self._validate_non_empty_string(frontmatter['id']):
+                errors.append("ID must be a non-empty string")
+
         if 'type' in frontmatter:
             valid_types = ['problem_solution', 'daily_adventure']
-            if frontmatter['type'] not in valid_types:
+            if not isinstance(frontmatter['type'], str) or frontmatter['type'] not in valid_types:
                 errors.append(f"Invalid story type: {frontmatter['type']}. Must be one of {valid_types}")
                 
         if 'characters' in frontmatter:
@@ -168,6 +172,15 @@ class StoryValidator:
         if 'tags' in frontmatter:
             if not self._validate_string_list_field(frontmatter['tags']):
                 errors.append("Tags must be a non-empty list of strings")
+
+        if 'setting' in frontmatter:
+            if not self._validate_non_empty_string(frontmatter['setting']):
+                errors.append("Setting must be a non-empty string")
+
+        if 'words' in frontmatter:
+            words = frontmatter['words']
+            if isinstance(words, bool) or not isinstance(words, int) or words <= 0:
+                errors.append("Words must be a positive integer")
                 
         return len(errors) == 0, errors
 
@@ -177,6 +190,9 @@ class StoryValidator:
             and len(values) > 0
             and all(isinstance(value, str) and value.strip() for value in values)
         )
+
+    def _validate_non_empty_string(self, value: Any) -> bool:
+        return isinstance(value, str) and bool(value.strip())
         
     def _analyze_content(self, content: str) -> Dict:
         """

@@ -4,16 +4,65 @@ from unittest.mock import AsyncMock, call, patch
 
 import aiohttp
 
-from src.poe_client import PoeClient, RateLimiter
+from src.poe_client import (
+    MAX_POE_RESPONSE_BYTES,
+    PoeClient,
+    PoeResponseTooLarge,
+    RateLimiter,
+)
+
+
+class FakePoeContent:
+    def __init__(self, chunks):
+        self.chunks = chunks
+
+    async def iter_chunked(self, _size):
+        for chunk in self.chunks:
+            yield chunk
+
+
+DEFAULT_CONTENT_LENGTH = object()
 
 
 class FakePoeResponse:
-    def __init__(self, status, body):
+    def __init__(self, status, body, content_length=DEFAULT_CONTENT_LENGTH, chunks=None):
         self.status = status
-        self._body = body
+        body_bytes = body.encode("utf-8") if isinstance(body, str) else body
+        self.content_length = (
+            len(body_bytes)
+            if content_length is DEFAULT_CONTENT_LENGTH
+            else content_length
+        )
+        self.content = FakePoeContent(chunks if chunks is not None else [body_bytes])
+        self.request_info = None
+        self.history = ()
 
-    async def text(self):
-        return self._body
+    def raise_for_status(self):
+        if self.status >= 400:
+            raise aiohttp.ClientResponseError(
+                self.request_info,
+                self.history,
+                status=self.status,
+            )
+
+
+class FakePostContext:
+    def __init__(self, response):
+        self.response = response
+
+    async def __aenter__(self):
+        return self.response
+
+    async def __aexit__(self, _exc_type, _exc_value, _traceback):
+        return False
+
+
+class FakePoeSession:
+    def __init__(self, response):
+        self.response = response
+
+    def post(self, *_args, **_kwargs):
+        return FakePostContext(self.response)
 
 
 class FakeClock:
@@ -78,6 +127,78 @@ class PoeClientTests(unittest.TestCase):
         self.assertNotIn("private", summary)
         self.assertNotIn("story", summary)
 
+    def test_response_reader_rejects_declared_oversize_before_streaming(self):
+        response = FakePoeResponse(
+            200,
+            b"{}",
+            content_length=MAX_POE_RESPONSE_BYTES + 1,
+        )
+
+        with self.assertRaisesRegex(PoeResponseTooLarge, "1 MiB"):
+            asyncio.run(PoeClient._read_response_text(response))
+
+    def test_response_reader_rejects_streamed_oversize_without_declared_length(self):
+        response = FakePoeResponse(
+            200,
+            b"",
+            content_length=None,
+            chunks=[b"a" * MAX_POE_RESPONSE_BYTES, b"b"],
+        )
+
+        with self.assertRaisesRegex(PoeResponseTooLarge, "1 MiB"):
+            asyncio.run(PoeClient._read_response_text(response))
+
+    def test_response_reader_accepts_exact_byte_limit(self):
+        response = FakePoeResponse(200, b"a" * MAX_POE_RESPONSE_BYTES)
+
+        result = asyncio.run(PoeClient._read_response_text(response))
+
+        self.assertEqual(MAX_POE_RESPONSE_BYTES, len(result))
+
+    def test_response_reader_rejects_invalid_utf8(self):
+        response = FakePoeResponse(200, b"\xff")
+
+        with self.assertRaises(UnicodeDecodeError):
+            asyncio.run(PoeClient._read_response_text(response))
+
+    def test_generation_extracts_story_through_bounded_reader(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        response = FakePoeResponse(
+            200,
+            '{"choices":[{"message":{"content":"bounded story"}}]}',
+        )
+        client.session = FakePoeSession(response)
+
+        result = asyncio.run(client._make_request("prompt"))
+
+        self.assertEqual("bounded story", result)
+
+    def test_unexpected_generation_shape_omits_parsed_body_from_logs(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        response = FakePoeResponse(200, '{"private":"upstream story"}')
+        client.session = FakePoeSession(response)
+
+        with self.assertLogs(level="ERROR") as context:
+            result = asyncio.run(client._make_request("prompt"))
+
+        logs = "\n".join(context.output)
+        self.assertIsNone(result)
+        self.assertIn("response body omitted", logs)
+        self.assertNotIn("upstream story", logs)
+
+    def test_generation_invalid_utf8_log_omits_offending_bytes(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        client.session = FakePoeSession(FakePoeResponse(200, b"private\xffstory"))
+
+        with self.assertLogs(level="ERROR") as context:
+            result = asyncio.run(client._make_request("prompt"))
+
+        logs = "\n".join(context.output)
+        self.assertIsNone(result)
+        self.assertIn("body omitted", logs)
+        self.assertNotIn("private", logs)
+        self.assertNotIn("\\xff", logs)
+
     def test_model_validation_logs_response_summary_without_raw_body(self):
         client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
         response = FakePoeResponse(400, '{"error":"invalid model private details"}')
@@ -90,6 +211,33 @@ class PoeClientTests(unittest.TestCase):
         self.assertIn("Poe validation response body omitted from logs", logs)
         self.assertIn("41 characters", logs)
         self.assertNotIn("private details", logs)
+
+    def test_model_validation_rejects_oversized_error_body(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        response = FakePoeResponse(
+            400,
+            b"{}",
+            content_length=MAX_POE_RESPONSE_BYTES + 1,
+        )
+
+        with self.assertLogs(level="ERROR") as context:
+            result = asyncio.run(client._process_validation_response(response, "test-model"))
+
+        self.assertFalse(result)
+        self.assertIn("1 MiB limit", "\n".join(context.output))
+
+    def test_model_validation_invalid_utf8_log_omits_offending_bytes(self):
+        client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
+        response = FakePoeResponse(400, b"private\xffmodel")
+
+        with self.assertLogs(level="ERROR") as context:
+            result = asyncio.run(client._process_validation_response(response, "test-model"))
+
+        logs = "\n".join(context.output)
+        self.assertFalse(result)
+        self.assertIn("body omitted", logs)
+        self.assertNotIn("private", logs)
+        self.assertNotIn("\\xff", logs)
 
     def test_model_validation_accepts_only_http_200(self):
         client = PoeClient(api_key="test-key", config={"models": ["test-model"]})
