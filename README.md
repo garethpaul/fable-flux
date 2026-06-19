@@ -1,5 +1,7 @@
 # Fable Flux
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 <!-- README-OVERVIEW-IMAGE -->
 ![Project overview](docs/readme-overview.svg)
 
@@ -84,13 +86,20 @@ npm run dev
 
 The API route at `front-end/src/app/api/chat/completions/route.ts` reads
 `MODAL_API_KEY`, `MODAL_API_URL`, and optional `MODAL_MODEL` on the server. It
-validates prompt length, requires an HTTPS Modal endpoint with a hostname, and
+bounds client JSON requests to 4 KiB of strict UTF-8 before parsing, validates
+prompt length, requires an HTTPS Modal endpoint with a hostname, and
 avoids logging raw upstream story content. The server bounds each Modal generation request to 30 seconds
-and returns a generic gateway-timeout response.
+and rejects HTTP redirects before returning a generic gateway-timeout response.
+Successful upstream responses
+must declare `application/json` before the proxy parses their bodies. Generated
+and stored stories must also pass one shared runtime shape guard before the API
+returns them or the story page renders them.
 
 The Python Poe client also omits raw upstream response bodies from parse and
 HTTP error logs; it records response length instead. Poe model validation
-response bodies are also omitted from logs. Its local rate limiter rejects
+response bodies are also omitted from logs. Validation error and generation
+response reads share a 1 MiB decompressed-byte limit and strict UTF-8 decoding;
+oversized or malformed bodies fail closed before JSON parsing. Its local rate limiter rejects
 invalid zero or negative limits and rechecks token state after sleeping before
 allowing another upstream request. Retry handling applies one failure-specific
 delay per actual retry and returns immediately once the retry budget is
@@ -116,6 +125,9 @@ make check
 The `make lint`, `make test`, and `make build` aliases run the same offline
 baseline when no narrower project-specific gate is installed.
 
+The same gate can run through an absolute Makefile path from another working
+directory: `make -f /path/to/fable-flux/Makefile check`.
+
 The baseline compiles Python entry points, runs synthetic validator tests plus
 offline diversity, prompt, and Poe rate-limit tests, performs static frontend
 proxy checks, and runs frontend lint when `front-end/node_modules` is present.
@@ -126,6 +138,7 @@ on Python 3.10, 3.12, and 3.14. A separate Node 20, 22, and 24 matrix performs
 clean frontend installs, linting, production builds, and moderate-severity npm
 audits. Actions are pinned by commit, repository access is read-only, and
 checkout credentials are not persisted in either job.
+The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 Both hosted matrices run on explicit Ubuntu 24.04 rather than a moving
 `ubuntu-latest` image.
 
@@ -156,3 +169,5 @@ See `SECURITY.md` for reporting guidance and `VISION.md` for project guardrails.
 See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
 See `docs/plans/2026-06-12-poe-model-validation-status.md` for the fail-closed
 model accessibility contract.
+See `docs/plans/2026-06-14-client-request-body-boundary.md` for the bounded
+public story-request JSON contract.

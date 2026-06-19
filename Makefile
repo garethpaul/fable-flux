@@ -1,7 +1,9 @@
 .PHONY: build check lint test
 
+ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 check:
-	./scripts/check-baseline.sh
+	"$(ROOT)/scripts/check-baseline.sh"
 
 lint: check
 

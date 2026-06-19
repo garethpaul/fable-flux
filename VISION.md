@@ -1,5 +1,7 @@
 ## Fable Flux Vision
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 This document explains the current state and direction of the project.
 Project overview and developer docs: [`README.md`](README.md)
 
@@ -23,6 +25,8 @@ Priority:
 
 Current baseline:
 
+- Make verification resolves repository paths independently of the caller's
+  working directory.
 - Tracked local Python virtualenv and bytecode cache artifacts have been
   removed.
 - `.gitignore` excludes generated environments, Python caches, frontend
@@ -44,10 +48,20 @@ Current baseline:
   HTTPS hostname and server-side prompt bounds.
 - Modal generation requests have a 30-second server-side deadline and generic
   timeout failures.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or Modal configuration access.
+- The Modal proxy rejects HTTP redirects after validating the configured HTTPS
+  endpoint.
+- Successful Modal responses are parsed only after an `application/json`
+  Content-Type check; missing or non-JSON media types fail closed.
+- Modal output and stored stories share one runtime shape guard before API
+  success or React rendering.
 - The Python Poe client avoids logging raw upstream response bodies and records
   response length for failed parse/HTTP paths.
 - Poe model validation response bodies are also omitted from logs and summarized
   by length.
+- Poe validation error and generation bodies are bounded to 1 MiB of decoded
+  bytes and strict UTF-8 before parsing; unexpected shapes remain content-free.
 - Poe model preflight accepts only HTTP 200 as proof of accessibility and fails
   closed for all other statuses.
 - The Poe client rate limiter validates positive limits and rechecks token
@@ -56,6 +70,7 @@ Current baseline:
   return immediately when the configured retry budget is exhausted.
 - Local Python and frontend environments are recreated from `requirements.txt`
   and `front-end/package-lock.json`.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
 - GitHub Actions runs the offline Python baseline and clean frontend
   lint/build/audit checks across active Python and Node releases without
   persisting checkout credentials.
@@ -65,7 +80,7 @@ Current baseline:
 
 Next priorities:
 
-- Add API route tests and broaden retry/error-path coverage
+- Broaden API route transport and retry/error-path coverage.
 - Keep frontend API proxy behavior secure and user-friendly
 - Keep the hosted GitHub Actions baseline aligned with local offline checks
 - Keep the pinned Ubuntu runner deliberate across both language matrices
