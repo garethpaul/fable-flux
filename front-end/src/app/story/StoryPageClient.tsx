@@ -1,39 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { StoryResponse } from "@/types/story";
+import { isStoryResponse, StoryResponse } from "@/types/story";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StoryFormatter from "@/components/StoryFormatter";
 
+const STORY_STORAGE_KEY = "currentStory";
+
+function subscribeToStoryStorage(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getStorySnapshot() {
+  return window.localStorage.getItem(STORY_STORAGE_KEY);
+}
+
+function getServerStorySnapshot() {
+  return undefined;
+}
+
 export default function StoryPageClient() {
-  const [story, setStory] = useState<StoryResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    // Get story data from localStorage
-    const storyData = localStorage.getItem("currentStory");
-
-    if (storyData) {
-      try {
-        const parsedStory = JSON.parse(storyData) as StoryResponse;
-        setStory(parsedStory);
-      } catch (error) {
-        console.error("Failed to parse story data:", error);
-        router.push("/");
-      }
-    } else {
-      // No story data found, redirect to home
-      router.push("/");
+  const storyData = useSyncExternalStore(
+    subscribeToStoryStorage,
+    getStorySnapshot,
+    getServerStorySnapshot
+  );
+  const { story, parseError } = useMemo<{
+    story: StoryResponse | null;
+    parseError: Error | null;
+  }>(() => {
+    if (!storyData) {
+      return { story: null, parseError: null };
     }
 
-    setIsLoading(false);
-  }, [router]);
+    try {
+      const parsedStory: unknown = JSON.parse(storyData);
+      if (!isStoryResponse(parsedStory)) {
+        throw new Error("Invalid stored story shape");
+      }
+      return { story: parsedStory, parseError: null };
+    } catch (error) {
+      return {
+        story: null,
+        parseError:
+          error instanceof Error ? error : new Error("Invalid stored story"),
+      };
+    }
+  }, [storyData]);
+  const isLoading = storyData === undefined;
+
+  useEffect(() => {
+    if (!isLoading && !story) {
+      if (parseError) {
+        console.error("Failed to parse story data:", parseError);
+      }
+      router.push("/");
+    }
+  }, [isLoading, parseError, router, story]);
 
   const handleCreateAnother = () => {
     // Clear the current story
-    localStorage.removeItem("currentStory");
+    localStorage.removeItem(STORY_STORAGE_KEY);
     router.push("/");
   };
 

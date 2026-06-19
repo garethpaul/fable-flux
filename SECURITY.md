@@ -1,5 +1,7 @@
 # Security Policy
 
+The frontend bounds Modal JSON responses to 1 MiB of strict UTF-8.
+
 ## Supported Versions
 
 The supported security scope for `fable-flux` is the current default branch, `main`. Older commits, tags, branches, forks, demos, and generated artifacts are not actively supported unless the repository explicitly marks them as maintained.
@@ -33,6 +35,9 @@ Helpful reports include:
 - Story validation and dataset upload parsing should reject malformed story
   frontmatter and keep list-typed metadata as non-empty string lists before
   quality checks or JSONL publishing.
+- Story validation and dataset upload parsing should reject unsupported story
+  types, non-string `id` or `setting` values, and non-positive or boolean
+  `words` values before JSONL publishing.
 - Poe model validation response bodies should be omitted from logs and
   summarized by length instead.
 - Poe model validation should fail closed for every response except HTTP 200;
@@ -42,9 +47,33 @@ Helpful reports include:
   and require a post-sleep token check before sending another upstream request.
 - Poe client failures should use one backoff delay per actual retry and should
   not sleep after the configured retry budget has been exhausted.
+- Poe validation error and generation responses must stay within the shared
+  1 MiB decompressed-byte limit and decode as strict UTF-8 before parsing.
+- Unexpected successful Poe response shapes must be logged without the parsed
+  upstream body.
+- Modal proxy requests must use a 30-second abort signal and return a generic
+  gateway-timeout response without logging raw exception objects.
+- The public frontend route bounds client JSON requests to 4 KiB of strict UTF-8
+  before parsing or reading Modal configuration.
+- The Modal proxy rejects HTTP redirects so prompt bodies cannot be forwarded
+  after endpoint validation.
+- Successful Modal proxy responses must declare an `application/json` media
+  type before body parsing; missing or non-JSON types fail closed generically.
+- Generated and stored stories must pass the shared runtime shape guard before
+  API success or React rendering; malformed string fields and character lists
+  fail closed without logging generated content.
 - GitHub Actions runs pinned Python and Node matrices for the offline baseline,
-  frontend lint/build, and moderate npm audit. Keep hosted paths free of live
-  Poe, Hugging Face, Modal, or generated-story uploads.
+  frontend lint/build, and moderate npm audit without persisting checkout
+  credentials. Keep hosted paths free of live Poe, Hugging Face, Modal, or
+  generated-story uploads.
+- The frontend targets Next.js 16.2 on Node 20.9 or newer and uses native flat ESLint configuration.
+- Keep both jobs on the explicit Ubuntu 24.04 image until a separately reviewed
+  runner migration validates every matrix entry.
+- Hugging Face publication and Modal deployment require the role, approval,
+  provenance, safety/privacy, least-privilege credential, postflight, rollback,
+  and incident process in `docs/publishing-serving-ownership.md`. Offline CI
+  does not prove account ownership, deployment reachability, billing, or live
+  generated-story quality.
 - Review found shell execution, subprocess, or dynamic evaluation surfaces; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.

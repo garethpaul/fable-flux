@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import StoryModal from "@/components/StoryModal";
 
@@ -13,27 +14,33 @@ export default function Home() {
         <div className="text-center max-w-4xl mx-auto">
           {/* Fable Flux Logo */}
           <div className="mb-6">
-            <img
+            <Image
               src="/fable_flux_logo.svg"
               alt="Fable Flux Logo"
+              width={710}
+              height={565}
               className="mx-auto max-w-48 w-full h-auto"
             />
           </div>
 
           {/* Hero Text */}
           <div className="mb-6">
-            <img
+            <Image
               src="/hero_text.svg"
               alt="Personalized Storytelling Unforgettable Lessons"
+              width={976}
+              height={163}
               className="mx-auto max-w-lg w-full h-auto"
             />
           </div>
 
           {/* Hero Image */}
           <div className="mb-8">
-            <img
+            <Image
               src="/fable_flux_hero.png"
               alt="Fable Flux Hero"
+              width={1212}
+              height={1046}
               className="mx-auto max-w-xl w-full h-auto"
             />
           </div>
@@ -45,9 +52,11 @@ export default function Home() {
               onClick={() => setIsModalOpen(true)}
               className="transition-transform hover:scale-105 focus:outline-none"
             >
-              <img
+              <Image
                 src="/create_story.svg"
                 alt="Create Story"
+                width={1391}
+                height={146}
                 className="max-w-sm w-full h-auto"
               />
             </button>
@@ -57,9 +66,11 @@ export default function Home() {
               href="/technical-details"
               className="transition-transform hover:scale-105 focus:outline-none"
             >
-              <img
+              <Image
                 src="/learn_more_btn.png"
                 alt="Learn More"
+                width={1391}
+                height={146}
                 className="max-w-sm w-full h-auto"
               />
             </Link>
