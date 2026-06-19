@@ -23,6 +23,8 @@ CLIENT_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-client-request-body-boundary.m
 POE_RESPONSE_BODY_PLAN="$ROOT_DIR/docs/plans/2026-06-14-poe-response-body-boundary.md"
 HOME_IMAGE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-home-next-image.md"
 NEXT16_PLAN="$ROOT_DIR/docs/plans/2026-06-16-nextjs-16-upgrade.md"
+AIOHTTP_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md"
+COMPATIBLE_FRONTEND_LOCK_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-frontend-lock-refresh.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
 HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
@@ -94,6 +96,8 @@ for path in \
   "docs/plans/2026-06-14-poe-response-body-boundary.md" \
   "docs/plans/2026-06-15-home-next-image.md" \
   "docs/plans/2026-06-16-nextjs-16-upgrade.md" \
+  "docs/plans/2026-06-17-aiohttp-3-14-1-security-refresh.md" \
+  "docs/plans/2026-06-18-compatible-frontend-lock-refresh.md" \
   "scripts/check-poe-response-body-boundary.py" \
   "scripts/check-home-next-image.py" \
   "docs/plans/2026-06-10-ci-baseline.md" \
@@ -378,7 +382,8 @@ if ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$
   grep -Fq "ubuntu-latest" "$workflow" ||
   ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$workflow" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$workflow" ||
-  ! grep -Fq "python -m pip install -r requirements-ci.txt" "$workflow" ||
+  ! grep -Fq "python -m pip install -r requirements-ci.txt pip-audit==2.10.0" "$workflow" ||
+  ! grep -Fq "python -m pip_audit -r requirements-ci.txt" "$workflow" ||
   ! grep -Fq "run: make check" "$workflow" ||
   ! grep -Fq "run: npm ci" "$workflow" ||
   ! grep -Fq "run: npm run lint" "$workflow" ||
@@ -501,8 +506,40 @@ if ! grep -Fq "checkout credentials are not persisted" "$ROOT_DIR/README.md"; th
 fi
 
 if ! grep -Fxq "PyYAML==6.0.3" "$ROOT_DIR/requirements-ci.txt" ||
-  ! grep -Fxq "aiohttp==3.14.0" "$ROOT_DIR/requirements-ci.txt"; then
+  ! grep -Fxq "aiohttp==3.14.1" "$ROOT_DIR/requirements-ci.txt"; then
   printf '%s\n' "Minimal offline CI dependencies must remain pinned." >&2
+  exit 1
+fi
+
+if ! grep -Fxq "aiohttp>=3.14.1" "$ROOT_DIR/requirements.txt" ||
+  ! grep -Fq "aiohttp>=3.14.1" "$ROOT_DIR/setup.py" ||
+  grep -Fq "aiohttp>=3.8.0" "$ROOT_DIR/setup.py"; then
+  printf '%s\n' "Runtime dependency guidance must reject vulnerable aiohttp releases." >&2
+  exit 1
+fi
+
+for aiohttp_plan_contract in \
+  'Status: Completed' \
+  'aiohttp 3.14.1' \
+  'eight open advisories' \
+  'Verification Completed' \
+  'exact dependency audit reported no known vulnerabilities' \
+  'All 32 backend tests passed' \
+  'complete repository and external-working-directory `make check` gates' \
+  'Six isolated hostile mutations were rejected' \
+  'Hosted push run `27709947843` and pull-request run `27709983810` passed all' \
+  '12 Python and frontend matrix jobs at implementation head' \
+  '`5602a07d51813644d90ef7a86393a31ce827db7e`' \
+  'eight aiohttp Dependabot alerts remain open against the default branch' \
+  'no alert dismissal or suppression is used'; do
+  if ! grep -Fq "$aiohttp_plan_contract" "$AIOHTTP_SECURITY_PLAN"; then
+    printf '%s\n' "aiohttp security plan must keep completion evidence: $aiohttp_plan_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'Hosted push and pull-request verification remains pending' "$AIOHTTP_SECURITY_PLAN"; then
+  printf '%s\n' "aiohttp security plan must not retain stale pending hosted evidence." >&2
   exit 1
 fi
 
@@ -540,7 +577,58 @@ checks = {
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
     raise SystemExit("Next.js 16 package contract failed: " + ", ".join(failed))
+
+compatible_checks = {
+    "package Tailwind PostCSS major": package.get("devDependencies", {}).get("@tailwindcss/postcss") == "^4",
+    "package Tailwind major": package.get("devDependencies", {}).get("tailwindcss") == "^4",
+    "package Node types major": package.get("devDependencies", {}).get("@types/node") == "^20",
+    "lock root Tailwind PostCSS major": root.get("devDependencies", {}).get("@tailwindcss/postcss") == "^4",
+    "lock root Tailwind major": root.get("devDependencies", {}).get("tailwindcss") == "^4",
+    "lock root Node types major": root.get("devDependencies", {}).get("@types/node") == "^20",
+    "installed Tailwind PostCSS": installed.get("node_modules/@tailwindcss/postcss", {}).get("version") == "4.3.1",
+    "installed Tailwind node": installed.get("node_modules/@tailwindcss/node", {}).get("version") == "4.3.1",
+    "installed Tailwind oxide": installed.get("node_modules/@tailwindcss/oxide", {}).get("version") == "4.3.1",
+    "installed Tailwind": installed.get("node_modules/tailwindcss", {}).get("version") == "4.3.1",
+    "installed Node types": installed.get("node_modules/@types/node", {}).get("version") == "20.19.43",
+}
+expected_oxide_packages = {
+    "node_modules/@tailwindcss/oxide-android-arm64",
+    "node_modules/@tailwindcss/oxide-darwin-arm64",
+    "node_modules/@tailwindcss/oxide-darwin-x64",
+    "node_modules/@tailwindcss/oxide-freebsd-x64",
+    "node_modules/@tailwindcss/oxide-linux-arm-gnueabihf",
+    "node_modules/@tailwindcss/oxide-linux-arm64-gnu",
+    "node_modules/@tailwindcss/oxide-linux-arm64-musl",
+    "node_modules/@tailwindcss/oxide-linux-x64-gnu",
+    "node_modules/@tailwindcss/oxide-linux-x64-musl",
+    "node_modules/@tailwindcss/oxide-wasm32-wasi",
+    "node_modules/@tailwindcss/oxide-win32-arm64-msvc",
+    "node_modules/@tailwindcss/oxide-win32-x64-msvc",
+}
+oxide_packages = {
+    path: details.get("version")
+    for path, details in installed.items()
+    if path.startswith("node_modules/@tailwindcss/oxide-") and path.count("/") == 2
+}
+compatible_checks["Tailwind platform package set"] = set(oxide_packages) == expected_oxide_packages
+compatible_checks["Tailwind platform package versions"] = set(oxide_packages.values()) == {"4.3.1"}
+
+failed = [name for name, passed in compatible_checks.items() if not passed]
+if failed:
+    raise SystemExit("Compatible frontend lock contract failed: " + ", ".join(failed))
 PY
+
+for compatible_lock_plan_contract in \
+  'Status: Completed' \
+  'Tailwind CSS and `@tailwindcss/postcss` 4.3.1' \
+  '`@types/node` 20.19.43' \
+  'Clean lockfile installs on Node 20.19.5, 22.22.2, and 24.16.0 resolved' \
+  'The moderate-severity npm audit reported zero vulnerabilities on each'; do
+  if ! grep -Fq "$compatible_lock_plan_contract" "$COMPATIBLE_FRONTEND_LOCK_PLAN"; then
+    printf '%s\n' "Compatible frontend lock plan must keep completion evidence: $compatible_lock_plan_contract" >&2
+    exit 1
+  fi
+done
 
 eslint_config="$ROOT_DIR/front-end/eslint.config.mjs"
 for eslint_contract in \
