@@ -108,9 +108,9 @@ done
 python3 "$POE_RESPONSE_BODY_CHECK" "$ROOT_DIR/src/poe_client.py" "$ROOT_DIR/tests/test_poe_client.py"
 "$PYTHON" "$HOME_IMAGE_CHECK" "$HOME_PAGE" "$HOME_IMAGE_PLAN"
 
-if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$ROOT_DIR/Makefile" ||
+if ! grep -Fq 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$ROOT_DIR/Makefile" ||
   ! grep -Fq '"$(ROOT)/scripts/check-baseline.sh"' "$ROOT_DIR/Makefile"; then
-  printf '%s\n' "Makefile verification must resolve the checker from the loaded Makefile." >&2
+  printf '%s\n' "Makefile verification must protect and resolve the checker from the loaded Makefile." >&2
   exit 1
 fi
 
