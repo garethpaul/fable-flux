@@ -30,6 +30,10 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
+Importing `src` or a dependency-free utility such as `DiversityTracker` does
+not eagerly import the Poe client, generator, or their optional dependencies.
+The package-level convenience exports load their owning module on first use.
+
 Copy `.env.example` to `.env` or export the values in your shell. Real tokens
 must stay out of git.
 

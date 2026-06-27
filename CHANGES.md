@@ -1,5 +1,50 @@
 # Changes
 
+## 2026-06-27T00:39:00Z - P2 - Lazily load package exports
+
+### Summary
+Decoupled dependency-free story utilities from optional network and generation
+dependencies while preserving the package's convenience import API.
+
+### Work completed
+- Replaced eager `src` imports with a PEP 562 lazy export map.
+- Preserved `from src import StoryGenerator`, `DiversityTracker`, `PoeClient`,
+  `StoryValidator`, and `BatchProcessor` behavior on first access.
+- Added a regression proving package import and `DiversityTracker` access do not
+  load the Poe client or story generator.
+
+### Threads
+- None; no open pull requests or issues existed, and the stale documentation
+  branch was behind the protected default branch.
+
+### Files changed
+- `src/__init__.py` — resolve public exports lazily and cache loaded values.
+- `tests/test_package_exports.py` — enforce optional-dependency isolation.
+- `README.md` — document lightweight package imports.
+- `docs/plans/2026-06-27-lazy-package-exports.md` — record design/evidence.
+
+### Validation
+- Focused regression before implementation — failed because importing `src`
+  immediately required unavailable `aiohttp`.
+- Dependency-free package and diversity tests — passed without `aiohttp`.
+- Validator/uploader tests — passed with their documented optional fallbacks.
+- Exact `requirements-ci.txt` virtual environment — `make check` passed all 36
+  backend tests; frontend lint truthfully skipped without `node_modules`.
+- `git diff --check` — passed.
+
+### Bugs / findings
+- Python imports execute package `__init__` before a requested submodule, so the
+  eager convenience imports made stdlib-only modules depend on every optional
+  client dependency.
+
+### Blockers
+- Local frontend dependencies were not installed; hosted Node matrices remain
+  authoritative for lint, production build, and audit.
+
+### Next action
+- Require the exact pull-request head to pass all hosted Python and Node
+  matrices plus CodeQL before merge.
+
 ## 2026-06-18
 
 - Rejected unsupported story types, non-string identifiers and settings, plus
