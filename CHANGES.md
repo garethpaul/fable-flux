@@ -1,5 +1,32 @@
 # Changes
 
+## 2026-07-18T00:00:00Z - P1 - Observe that the test suite still asserts
+
+### Summary
+Closed the gate's terminal verification rung: `make check` ran the real suite and
+pinned guard and test-case text, but nothing observed that the suite's assertions
+still assert. An added `tests/test*.py` module rebinding
+`unittest.TestCase.assert*` shipped a real fail-open story-validator defect at
+exit 0 with every pinned literal byte-identical.
+
+### Work completed
+- Made `tests/` closed-world with the `find` inventory idiom already used for the
+  workflow directory, so an added module is named and rejected.
+- Added `scripts/test-security-mutations.py`, an out-of-band planted-defect
+  control that stages `src/` and `tests/`, plants each of seven real fail-open
+  defects, and requires the real suite to go red, behind a clean-tree control.
+  A neutered suite makes every mutation survive, so the control fails by
+  construction rather than by pinning.
+- Wired the control into `scripts/check-baseline.sh` so hosted `make check`
+  reaches it, and pinned its planted-defect loop and mutation count.
+- Strengthened `test_parse_story_file_rejects_non_string_sequence_items`, which
+  the new control caught passing with its guard deleted because the outer
+  `except Exception` returns `None` for the incidental `AttributeError` too. It
+  now asserts the guard's own diagnostic.
+
+### Threads
+- None; no open pull requests by the author existed on the repository.
+
 ## 2026-06-27T00:39:00Z - P2 - Lazily load package exports
 
 ### Summary

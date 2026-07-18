@@ -27,6 +27,7 @@ AIOHTTP_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-17-aiohttp-3-14-1-security-r
 COMPATIBLE_FRONTEND_LOCK_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-frontend-lock-refresh.md"
 POE_RESPONSE_BODY_CHECK="$ROOT_DIR/scripts/check-poe-response-body-boundary.py"
 HOME_IMAGE_CHECK="$ROOT_DIR/scripts/check-home-next-image.py"
+MUTATION_CONTROL="$ROOT_DIR/scripts/test-security-mutations.py"
 HOME_PAGE="$ROOT_DIR/front-end/src/app/page.tsx"
 PUBLISHING_OWNERSHIP="$ROOT_DIR/docs/publishing-serving-ownership.md"
 PYTHON=${PYTHON:-python3}
@@ -100,6 +101,9 @@ for path in \
   "docs/plans/2026-06-18-compatible-frontend-lock-refresh.md" \
   "scripts/check-poe-response-body-boundary.py" \
   "scripts/check-home-next-image.py" \
+  "scripts/test-security-mutations.py" \
+  "tests/test_package_exports.py" \
+  "docs/plans/2026-07-18-test-assertion-mechanism-control.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-08-fable-flux-maintenance-baseline.md"; do
   require_file "$path"
@@ -137,6 +141,48 @@ fi
   "$ROOT_DIR"/tests/*.py
 
 (cd "$ROOT_DIR" && "$PYTHON" -m unittest discover -s tests -p "test*.py")
+
+# The unittest suite above and the source/test greps below both observe text and
+# outcomes; neither observes that the suite's assertions still assert. Keep the
+# test directory closed-world so an added module cannot neuter the assertion
+# mechanism before the real cases run, mirroring the workflow inventory below.
+tests_files=$(find "$ROOT_DIR/tests" -mindepth 1 -maxdepth 1 -type f -print | sort)
+expected_tests_files=$(printf '%s\n' \
+  "$ROOT_DIR/tests/test_diversity_tracker.py" \
+  "$ROOT_DIR/tests/test_huggingface_uploader.py" \
+  "$ROOT_DIR/tests/test_package_exports.py" \
+  "$ROOT_DIR/tests/test_poe_client.py" \
+  "$ROOT_DIR/tests/test_story_validator.py" | sort)
+if [ "$tests_files" != "$expected_tests_files" ]; then
+  printf '%s\n' "Test inventory must contain only the pinned suite modules." >&2
+  printf '%s\n' "Found:" >&2
+  printf '%s\n' "$tests_files" >&2
+  exit 1
+fi
+
+# Out-of-band planted-defect control. A closed-world inventory alone cannot stop
+# an in-file assertion rebind, so plant real defects and require the real suite
+# to go red for each. A neutered suite passes unconditionally, so every mutation
+# survives and this control fails by construction rather than by pinning.
+"$PYTHON" "$MUTATION_CONTROL"
+
+for mutation_control_contract in \
+  'MUTATIONS = [' \
+  'if control.returncode != 0:' \
+  'Clean-tree control failed' \
+  'if result.returncode == 0:' \
+  'survivors.append(mutation["name"])' \
+  'hostile mutation survived'; do
+  if ! grep -Fq "$mutation_control_contract" "$MUTATION_CONTROL"; then
+    printf '%s\n' "Mutation control must keep its planted-defect loop: $mutation_control_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Fc '        "name": "' "$MUTATION_CONTROL")" -lt 7 ]; then
+  printf '%s\n' "Mutation control must retain at least seven planted defects." >&2
+  exit 1
+fi
 
 "$PYTHON" - "$ROOT_DIR" <<'PY'
 import json
