@@ -84,7 +84,19 @@ Milo shared a pail with a friend.
 
 The End.""")
 
-        self.assertIsNone(StoryParser().parse_story_file(path))
+        with self.assertLogs(level="WARNING") as captured:
+            self.assertIsNone(StoryParser().parse_story_file(path))
+        # Observe the guard's own diagnostic, not just the None result: the
+        # outer `except Exception` in parse_story_file also returns None when a
+        # removed guard lets an incidental AttributeError escape, so asserting
+        # None alone passes whether or not the guard exists.
+        self.assertTrue(
+            any(
+                "must contain only non-empty strings" in message
+                for message in captured.output
+            ),
+            captured.output,
+        )
 
     def test_parse_story_file_rejects_invalid_scalar_metadata_types(self):
         replacements = {
